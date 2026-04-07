@@ -1,6 +1,7 @@
+import 'package:astrosarthi_konnect_astrologer_app/chat/chat_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:astrosarthi_konnect_astrologer_app/chat/chat_controller.dart';
+import 'package:astrosarthi_konnect_astrologer_app/chat/chat_list_controller.dart';
 
 
 class ChatList extends StatelessWidget {
@@ -8,8 +9,8 @@ class ChatList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GetBuilder<ChatController>(
-      init: ChatController(),
+    return GetBuilder<ChatListController>(
+      init: ChatListController(),
       builder: (controller) {
 
         print("BUILD: ${controller.sessions.length}");
@@ -38,6 +39,9 @@ class ChatList extends StatelessWidget {
               final messages = session['messages'] ?? [];
 
               return ListTile(
+                onTap: (){
+                  Get.to(()=>ChatScreen());
+                },
                 title: Text(user['name'] ?? 'No name'),
                 subtitle: Text(
                   messages.isNotEmpty
