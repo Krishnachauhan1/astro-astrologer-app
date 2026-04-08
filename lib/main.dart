@@ -17,7 +17,6 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-
 import 'firebase_options.dart';
 
 class NavController extends GetxController {
@@ -32,9 +31,7 @@ class NavController extends GetxController {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   await ApiService.loadToken();
 
@@ -60,9 +57,7 @@ class AstrologyApp extends StatelessWidget {
         Get.put(LiveController());
         Get.put(VastuController());
       }),
-      home: GetBuilder<AuthController>(
-        builder: (auth) => auth.isLoggedIn ? const MainShell() : const LoginScreen(),
-      ),
+      home: GetBuilder<AuthController>(builder: (auth) => auth.isLoggedIn ? const MainShell() : const LoginScreen()),
     );
   }
 }
@@ -73,13 +68,7 @@ class AstrologyApp extends StatelessWidget {
 class MainShell extends StatelessWidget {
   const MainShell({super.key});
 
-  static const _pages = [
-    HomeScreen(),
-    ChatList(),
-    LiveScreen(),
-    VastuScreen(),
-    ProfileScreen(),
-  ];
+  static final _pages = [const HomeScreen(), ChatList(), const LiveScreen(), const VastuScreen(), const ProfileScreen()];
 
   @override
   Widget build(BuildContext context) {

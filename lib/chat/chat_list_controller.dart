@@ -1,82 +1,118 @@
-import 'package:flutter/material.dart';
+// import 'package:flutter/material.dart';
+// import 'package:get/get.dart';
+// import 'package:astrosarthi_konnect_astrologer_app/chat/chat_model.dart';
+// import 'package:astrosarthi_konnect_astrologer_app/servicess/api_service.dart';
+
+// class ChatListController extends GetxController {
+//   List<dynamic> sessions = [];
+//   List<ChatMessage> messages = [];
+
+//   bool isLoading = false;
+//   int? sessionId;
+
+//   final TextEditingController msgController = TextEditingController();
+
+//   int currentUserId = 1;
+//   String currentUserRole = 'user';
+
+//   @override
+//   void onInit() {
+//     super.onInit();a
+//     fetchSessions();
+//   }
+
+//   // ✅ FETCH SESSIONS (FIXED)
+//   Future<void> fetchSessions() async {
+//     print('🚀 Fetching sessions...');
+
+//     try {
+//       isLoading = true;
+//       update();
+
+//       final res = await ApiService.get('/chat/astrologer/sessions');
+
+//       print("✅ API RESPONSE: $res");
+
+//       if (res['data'] != null && res['data'] is List) {
+//         sessions = List.from(res['data']);
+//       } else {
+//         print("⚠️ No data found");
+//         sessions = [];
+//       }
+//     } catch (e) {
+//       print("❌ ERROR: $e");
+//       sessions = [];
+//     } finally {
+//       isLoading = false;
+//       update();
+//     }
+//   }
+
+//   // ✅ SEND MESSAGE (SAFE)
+//   Future<void> sendMessage() async {
+//     final text = msgController.text.trim();
+
+//     if (text.isEmpty || sessionId == null) {
+//       print("⚠️ Message empty OR sessionId null");
+//       return;
+//     }
+
+//     final optimistic = ChatMessage(id: DateTime.now().millisecondsSinceEpoch, message: text, senderType: currentUserRole, senderId: currentUserId, createdAt: DateTime.now().toIso8601String());
+
+//     messages.add(optimistic);
+//     msgController.clear();
+//     update();
+
+//     try {
+//       await ApiService.post('/chat/$sessionId/message', {'message': text, 'type': 'text'});
+
+//       print("✅ Message sent successfully");
+//     } catch (e) {
+//       print("❌ ERROR sending message: $e");
+//     }
+//   }
+
+//   @override
+//   void onClose() {
+//     msgController.dispose();
+//     super.onClose();
+//   }
+// }
+
 import 'package:get/get.dart';
-import 'package:astrosarthi_konnect_astrologer_app/chat/chat_model.dart';
-import 'package:astrosarthi_konnect_astrologer_app/servicess/api_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ChatListController extends GetxController {
-  List<dynamic> sessions = []; // Chat sessions
-  List<ChatMessage> messages = []; // Messages for selected session
-  bool isLoading = false;
-  int? sessionId;
-  final TextEditingController msgController = TextEditingController();
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  int currentUserId = 1;
-  String currentUserRole = 'user';
+  List<Map<String, dynamic>> sessions = [];
+  bool isLoading = true;
 
   @override
   void onInit() {
     super.onInit();
-    fetchSessions();
+    listenToSessions(); // 🔥 real-time listener
   }
 
-  // Fetch all active sessions
-  Future<void> fetchSessions() async {
-    print('fetching session');
-    sessions.clear();
-    isLoading = true;
-    update();
+  // ✅ REAL-TIME CHAT LIST
+  void listenToSessions() {
+    try {
+      _firestore.collection('chat_sessions').orderBy('timestamp', descending: true).snapshots().listen((snapshot) {
+        sessions = snapshot.docs.map((doc) {
+          final data = doc.data();
+          data['id'] = doc.id;
+          return data;
+        }).toList();
 
-    final res = await ApiService.get('/chat/astrologer/sessions');
+        print("🔥 Sessions Updated: ${sessions.length}");
 
-    if (res['data'] != null) {
-      sessions = List.from(res['data']);
+        isLoading = false;
+        update();
+      });
+    } catch (e) {
+      print("❌ Firebase Error: $e");
+      isLoading = false;
+      update();
     }
-
-    isLoading = false;
-    update();
-  }
-  // Fetch messages for a specific session
-  // Future<void> fetchMessages(int sessionId) async {
-  //   this.sessionId = sessionId;
-  //   final res = await ApiService.get('/chat/$sessionId/messages');
-  //   if (res['data'] != null) {
-  //     messages = (res['data'] as List)
-  //         .map((e) => ChatMessage.fromJson(e))
-  //         .toList();
-  //   } else {
-  //     messages = [];
-  //   }
-  //   update();
-  // }
-
-  // Send message
-  Future<void> sendMessage() async {
-    final text = msgController.text.trim();
-    if (text.isEmpty || sessionId == null) return;
-
-    final optimistic = ChatMessage(
-      id: DateTime.now().millisecondsSinceEpoch,
-      message: text,
-      senderType: currentUserRole,
-      senderId: currentUserId,
-      createdAt: DateTime.now().toIso8601String(),
-    );
-
-    messages.add(optimistic);
-    msgController.clear();
-    update();
-
-    await ApiService.post('/chat/$sessionId/message', {
-      'message': text,
-      'type': 'text',
-    });
-
-    // await fetchMessages(sessionId!);
-  }
-
-  @override
-  void onClose() {
-    msgController.dispose();
-    super.onClose();
   }
 }
