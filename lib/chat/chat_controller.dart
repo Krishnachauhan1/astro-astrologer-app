@@ -4,19 +4,18 @@ import 'package:get/get.dart';
 
 class ChatController extends GetxController {
   final TextEditingController msgController = TextEditingController();
-
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-
   List<Map<String, dynamic>> messages = [];
-
   late String chatId;
-
+  late String userName;
   @override
   void onInit() {
     super.onInit();
 
-    // Replace with real IDs
-    chatId = "demo_chat";
+    // chatId = "demo_chat";
+    final args = Get.arguments as Map<String, dynamic>? ?? {};
+    chatId = args['chatId'] ?? 'demo_chat';
+    userName = args['userName'] ?? 'User';
 
     listenMessages();
   }
@@ -29,43 +28,52 @@ class ChatController extends GetxController {
         .collection('messages')
         .orderBy('timestamp', descending: false)
         .snapshots()
-        .listen((snapshot) {
-
-      messages = snapshot.docs.map((doc) {
-        final data = doc.data();
-
-        return {
-          'message': data['message'] ?? '',
-          'isUser': data['isUser'] ?? false,
-          'timestamp': data['timestamp'],
-        };
-      }).toList();
-
-      update();
-    });
+        .listen(
+          (snapshot) {
+            messages = snapshot.docs.map((doc) {
+              final data = doc.data();
+              return {
+                'message': data['message'] ?? '',
+                'isUser': data['isUser'] ?? false,
+                'timestamp': data['timestamp'],
+              };
+            }).toList();
+            update();
+          },
+          onError: (e) {
+            print("Message Stream Error==== $e");
+          },
+        );
   }
 
   /// 📤 Send message
   Future<void> sendMessage() async {
     final text = msgController.text.trim();
     if (text.isEmpty) return;
-
     msgController.clear();
-
-    await _firestore
+    final batch = _firestore.batch();
+    final msgRef = _firestore
         .collection('chats')
         .doc(chatId)
         .collection('messages')
-        .add({
+        .doc();
+    batch.set(msgRef, {
       'message': text,
-      'isUser': true,
+      'isUser': false,
       'timestamp': FieldValue.serverTimestamp(),
     });
-
-    /// Optional: update chat meta
-    await _firestore.collection('chats').doc(chatId).set({
+    final sessionRef = _firestore.collection('chat_sessions').doc(chatId);
+    batch.set(sessionRef, {
       'lastMessage': text,
       'updatedAt': FieldValue.serverTimestamp(),
+      'status': 'active',
     }, SetOptions(merge: true));
+    await batch.commit();
+  }
+
+  @override
+  void onClose() {
+    msgController.dispose();
+    super.onClose();
   }
 }

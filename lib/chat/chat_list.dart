@@ -73,15 +73,17 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'chat_list_controller.dart';
+import 'chat_screen.dart';
 
 class ChatList extends StatelessWidget {
-  ChatList({super.key});
+  const ChatList({super.key});
 
-  final ChatListController controller = Get.put(ChatListController());
+  // final ChatListController controller = Get.put(ChatListController());
 
   @override
   Widget build(BuildContext context) {
     return GetBuilder<ChatListController>(
+      init: ChatListController(),
       builder: (controller) {
         if (controller.isLoading) {
           return Scaffold(
@@ -110,13 +112,28 @@ class ChatList extends StatelessWidget {
 
                 trailing: Container(
                   padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                  decoration: BoxDecoration(color: session['status'] == 'active' ? Colors.green : Colors.grey, borderRadius: BorderRadius.circular(10)),
-                  child: Text(session['status'] ?? 'inactive', style: TextStyle(color: Colors.white, fontSize: 12)),
+                  decoration: BoxDecoration(
+                    color: session['status'] == 'active'
+                        ? Colors.green
+                        : Colors.grey,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    session['status'] ?? 'inactive',
+                    style: TextStyle(color: Colors.white, fontSize: 12),
+                  ),
                 ),
 
                 onTap: () {
                   print("Open chat: ${session['id']}");
-                  // Navigate to chat screen
+                  Get.to(
+                    () => const ChatScreen(),
+                    arguments: {
+                      'chatId': session['id'],
+                      'userName': session['userName'] ?? 'User',
+                      // Navigate to chat screen
+                    },
+                  );
                 },
               );
             },

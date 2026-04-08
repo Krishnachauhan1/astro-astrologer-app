@@ -91,28 +91,31 @@ class ChatListController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    listenToSessions(); // 🔥 real-time listener
+    listenToSessions();
   }
 
-  // ✅ REAL-TIME CHAT LIST
   void listenToSessions() {
-    try {
-      _firestore.collection('chat_sessions').orderBy('timestamp', descending: true).snapshots().listen((snapshot) {
-        sessions = snapshot.docs.map((doc) {
-          final data = doc.data();
-          data['id'] = doc.id;
-          return data;
-        }).toList();
+    _firestore
+        .collection('chat_sessions')
+        .orderBy('updatedAt', descending: true)
+        .snapshots()
+        .listen(
+          (snapshot) {
+            sessions = snapshot.docs.map((doc) {
+              final data = doc.data();
+              data['id'] = doc.id;
+              return data;
+            }).toList();
 
-        print("🔥 Sessions Updated: ${sessions.length}");
-
-        isLoading = false;
-        update();
-      });
-    } catch (e) {
-      print("❌ Firebase Error: $e");
-      isLoading = false;
-      update();
-    }
+            print("🔥 Sessions: ${sessions.length}");
+            isLoading = false;
+            update();
+          },
+          onError: (e) {
+            print("Stream Error: $e");
+            isLoading = false;
+            update();
+          },
+        );
   }
 }

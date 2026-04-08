@@ -22,22 +22,45 @@ class ProfileScreen extends StatelessWidget {
               title: const Text('My Profile'),
               flexibleSpace: FlexibleSpaceBar(
                 background: Container(
-                  decoration: const BoxDecoration(gradient: LinearGradient(colors: [AppColors.primaryDark, AppColors.primary])),
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [AppColors.primaryDark, AppColors.primary],
+                    ),
+                  ),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const SizedBox(height: 40),
+                      const SizedBox(height: 90),
                       CircleAvatar(
                         radius: 44,
                         backgroundColor: Colors.white.withOpacity(0.2),
                         child: Text(
-                          auth.user?.name.isNotEmpty == true ? auth.user!.name[0].toUpperCase() : 'U',
-                          style: const TextStyle(fontSize: 36, color: Colors.white, fontWeight: FontWeight.bold),
+                          auth.user?.name.isNotEmpty == true
+                              ? auth.user!.name[0].toUpperCase()
+                              : 'U',
+                          style: const TextStyle(
+                            fontSize: 36,
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                       const SizedBox(height: 10),
-                      Text(auth.user?.name ?? 'User', style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-                      Text(auth.user?.phone ?? '', style: const TextStyle(color: AppColors.primarySurface, fontSize: 13)),
+                      Text(
+                        auth.user?.name ?? 'User',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        auth.user?.phone ?? '',
+                        style: const TextStyle(
+                          color: AppColors.primarySurface,
+                          fontSize: 13,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -49,21 +72,47 @@ class ProfileScreen extends StatelessWidget {
                 child: Column(
                   children: [
                     _profileCard([
-                      _profileItem(Icons.person_outline, 'Name', auth.user?.name ?? '-'),
-                      _profileItem(Icons.email_outlined, 'Email', auth.user?.email ?? '-'),
-                      _profileItem(Icons.phone_outlined, 'Phone', auth.user?.phone ?? '-'),
+                      _profileItem(
+                        Icons.person_outline,
+                        'Name',
+                        auth.user?.name ?? '-',
+                      ),
+                      _profileItem(
+                        Icons.email_outlined,
+                        'Email',
+                        auth.user?.email ?? '-',
+                      ),
+                      _profileItem(
+                        Icons.phone_outlined,
+                        'Phone',
+                        auth.user?.phone ?? '-',
+                      ),
                     ]),
                     const SizedBox(height: 14),
                     _menuItem(Icons.history_rounded, 'Chat History', () {}),
-                    _menuItem(Icons.home_work_outlined, 'Vastu Requests', () => Get.to(() => const VastuScreen())),
+                    _menuItem(
+                      Icons.home_work_outlined,
+                      'Vastu Requests',
+                      () => Get.to(() => const VastuScreen()),
+                    ),
                     _menuItem(Icons.settings_outlined, 'Settings', () {}),
-                    _menuItem(Icons.help_outline_rounded, 'Help & Support', () {}),
+                    _menuItem(
+                      Icons.help_outline_rounded,
+                      'Help & Support',
+                      () {},
+                    ),
                     const SizedBox(height: 10),
                     SizedBox(
                       width: double.infinity,
                       child: OutlinedButton.icon(
-                        icon: const Icon(Icons.logout_rounded, color: AppColors.busy),
-                        label: const Text('Logout', style: TextStyle(color: AppColors.busy, fontSize: 15)),
+                        icon: const Icon(
+                          Icons.logout_rounded,
+                          color: AppColors.busy,
+                        ),
+                        label: const Text(
+                          'Logout',
+                          style: TextStyle(color: AppColors.busy, fontSize: 15),
+                        ),
                         onPressed: () async {
                           await auth.logout();
                           Get.offAll(() => const LoginScreen());
@@ -71,7 +120,9 @@ class ProfileScreen extends StatelessWidget {
                         style: OutlinedButton.styleFrom(
                           side: const BorderSide(color: AppColors.busy),
                           padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
                         ),
                       ),
                     ),
@@ -92,7 +143,13 @@ class ProfileScreen extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(18),
-        boxShadow: [BoxShadow(color: AppColors.primary.withOpacity(0.08), blurRadius: 12, offset: const Offset(0, 4))],
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.primary.withOpacity(0.08),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(children: children),
     );
@@ -108,8 +165,18 @@ class ProfileScreen extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(label, style: const TextStyle(color: AppColors.textHint, fontSize: 11)),
-              Text(value, style: const TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w500, fontSize: 14)),
+              Text(
+                label,
+                style: const TextStyle(color: AppColors.textHint, fontSize: 11),
+              ),
+              Text(
+                value,
+                style: const TextStyle(
+                  color: AppColors.textPrimary,
+                  fontWeight: FontWeight.w500,
+                  fontSize: 14,
+                ),
+              ),
             ],
           ),
         ],
@@ -123,8 +190,14 @@ class ProfileScreen extends StatelessWidget {
       elevation: 1,
       child: ListTile(
         leading: Icon(icon, color: AppColors.primary),
-        title: Text(label, style: const TextStyle(fontSize: 14, color: AppColors.textPrimary)),
-        trailing: const Icon(Icons.chevron_right_rounded, color: AppColors.textHint),
+        title: Text(
+          label,
+          style: const TextStyle(fontSize: 14, color: AppColors.textPrimary),
+        ),
+        trailing: const Icon(
+          Icons.chevron_right_rounded,
+          color: AppColors.textHint,
+        ),
         onTap: onTap,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
       ),
