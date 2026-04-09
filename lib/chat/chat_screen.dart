@@ -8,7 +8,7 @@ class ChatScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GetBuilder<ChatController>(
-      init: ChatController(),
+      // init: ChatCon  tag: Get.arguments?['chatId'],troller(),
       builder: (ctrl) {
         return Scaffold(
           appBar: AppBar(
