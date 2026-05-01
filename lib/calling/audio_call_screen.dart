@@ -50,7 +50,7 @@ class AudioCallScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     const Text(
-                      'Call shuru ho rahi hai...',
+                      'Call is Starting...',
                       style: TextStyle(color: Colors.white70, fontSize: 14),
                     ),
                   ],
@@ -92,7 +92,7 @@ class AudioCallScreen extends StatelessWidget {
                           backgroundColor: Colors.white,
                         ),
                         child: const Text(
-                          'Wapas Jao',
+                          'Go Back',
                           style: TextStyle(color: AppColors.primary),
                         ),
                       ),

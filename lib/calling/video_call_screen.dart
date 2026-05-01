@@ -49,7 +49,7 @@ class VideoCallScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     const Text(
-                      'Call shuru ho rahi hai...',
+                      'Call is Starting...',
                       style: TextStyle(color: Colors.white70, fontSize: 14),
                     ),
                   ],
@@ -87,7 +87,7 @@ class VideoCallScreen extends StatelessWidget {
                           backgroundColor: AppColors.primary,
                         ),
                         child: const Text(
-                          'Wapas Jao',
+                          'Go Back',
                           style: TextStyle(color: Colors.white),
                         ),
                       ),
@@ -136,7 +136,7 @@ class VideoCallScreen extends StatelessWidget {
                             ),
                             const SizedBox(height: 8),
                             const Text(
-                              'Astrologer se connect ho raha hai...',
+                              'Connecting with Astrologer...',
                               style: TextStyle(
                                 color: Colors.white54,
                                 fontSize: 13,
