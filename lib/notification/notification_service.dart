@@ -32,12 +32,17 @@ class NotificationService {
 
     // 📩 FOREGROUND MESSAGE
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      print("📩 FOREGROUND MESSAGE: ${message.data}");
+  if (message.data['type'] == 'incoming_call') {
+    showIncomingCallUI(message.data);
+  }
+});
+    // FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+    //   print("📩 FOREGROUND MESSAGE: ${message.data}");
 
-      if (message.data.isNotEmpty) {
-        _showNotification(message);
-      }
-    });
+    //   if (message.data.isNotEmpty) {
+    //     _showNotification(message);
+    //   }
+    // });
 
     // 👆 APP OPEN FROM NOTIFICATION
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
