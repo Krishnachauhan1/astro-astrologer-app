@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:astrosarthi_konnect_astrologer_app/app_theme.dart';
 import 'package:astrosarthi_konnect_astrologer_app/authentication/auth_controller.dart';
 import 'package:astrosarthi_konnect_astrologer_app/authentication/login_screen.dart';
@@ -10,7 +12,9 @@ import 'package:astrosarthi_konnect_astrologer_app/profile/profile_screen.dart';
 import 'package:astrosarthi_konnect_astrologer_app/servicess/api_service.dart';
 import 'package:astrosarthi_konnect_astrologer_app/vastu/vastu_controller.dart';
 import 'package:astrosarthi_konnect_astrologer_app/vastu/vastu_screen.dart';
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -24,14 +28,34 @@ class NavController extends GetxController {
     update();
   }
 }
+Future<void> printDeviceInfo() async {
+  final deviceInfo = DeviceInfoPlugin();
 
+  if (Platform.isAndroid) {
+    final androidInfo = await deviceInfo.androidInfo;
+    print("📱 Device: ${androidInfo.model}");
+    print("📱 Brand: ${androidInfo.brand}");
+    print("📱 Android Version: ${androidInfo.version.release}");
+    print("📱 Device ID: ${androidInfo.id}");
+  } else if (Platform.isIOS) {
+    final iosInfo = await deviceInfo.iosInfo;
+    print("📱 Device: ${iosInfo.utsname.machine}");
+    print("📱 iOS Version: ${iosInfo.systemVersion}");
+    print("📱 Device ID: ${iosInfo.identifierForVendor}");
+  }
+}
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   await ApiService.loadToken();
+  
+  String? token = await FirebaseMessaging.instance.getToken();
+  print("🔥 FCM Token: $token");
+  await printDeviceInfo();
 
+print("🔥 FCM Token: $token");
   await NotificationService().initialize();
 
   runApp(const AstrologyApp());

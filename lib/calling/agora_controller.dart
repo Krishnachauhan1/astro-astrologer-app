@@ -1,5 +1,6 @@
 import 'package:agora_rtc_engine/agora_rtc_engine.dart';
 import 'package:astrosarthi_konnect_astrologer_app/servicess/api_service.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:get/get.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -24,7 +25,7 @@ class AgoraController extends GetxController {
   final bool isVideoCall;
   final String astrologerName;
   String get rateText => _ratePerMin != null ? '₹$_ratePerMin/min' : '';
-  // String get channelName => _agoraChannel ?? '';
+  //  String get channelName => _agoraChannel ?? '';
   String get channelName => '123';
   AgoraController({
     required this.astrologerId,
@@ -35,16 +36,66 @@ class AgoraController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    _updateFcmToken() ; 
+    _listenFcmRefresh();
     _initiateCall();
   }
+
+void _listenFcmRefresh() {
+  FirebaseMessaging.instance.onTokenRefresh.listen((newToken) async {
+    try {
+      print('FCM Token Refreshed: $newToken');
+
+      await ApiService.post(
+        '/user/update-fcm-token',
+        {
+          "fcm_token": newToken,
+        },
+      );
+    } catch (e) {
+      print('FCM refresh error: $e');
+    }
+  });
+}
+
+
+Future<void> _updateFcmToken() async {
+  try {
+    String? token = await FirebaseMessaging.instance.getToken();
+
+    if (token != null && token.isNotEmpty) {
+      print('FCM Token: $token');
+
+      await ApiService.post(
+        '/user/update-fcm-token',
+        {
+          "fcm_token": token,
+        },
+      );
+
+      print('FCM token updated successfully');
+    }
+  } catch (e) {
+    print('FCM update error: $e');
+  }
+}
+
+
+
+
+
+
 
   Future<void> _initiateCall() async {
     isLoading = true;
     errorMessage = '';
     update();
 
+
+
+
     try {
-      final response = await ApiService.post('/call/initiate', {
+      final response = await ApiService.post( '/call/initiate', {
         'astrologer_id': astrologerId,
         'type': isVideoCall ? 'video' : 'audio',
       });
