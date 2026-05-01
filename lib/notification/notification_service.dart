@@ -33,7 +33,7 @@ class NotificationService {
     // 📩 FOREGROUND MESSAGE
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
   if (message.data['type'] == 'incoming_call') {
-    showIncomingCallUI(message.data);
+    // showIncomingCallUI(message.data);
   }
 });
     // FirebaseMessaging.onMessage.listen((RemoteMessage message) {
