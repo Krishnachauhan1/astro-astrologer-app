@@ -13,7 +13,7 @@ class VastuController extends GetxController {
     '💔 Vaivahik Samasya',
     '📚 Shiksha mein Rukawat',
   ];
-  loading(){
+  void loading(){
     isLoading=!isLoading;
     update();
   }

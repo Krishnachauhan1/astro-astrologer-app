@@ -75,8 +75,7 @@ class AuthController extends GetxController {
       isLoading = false;
 
       // ✅ Success check
-      if (res != null &&
-          res['data'] != null &&
+      if (res['data'] != null &&
           res['data']['token'] != null) {
 
         // Save token
