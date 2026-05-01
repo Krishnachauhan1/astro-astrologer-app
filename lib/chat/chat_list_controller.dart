@@ -79,8 +79,8 @@
 //   }
 // }
 
-import 'package:get/get.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:get/get.dart';
 
 class ChatListController extends GetxController {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -91,28 +91,52 @@ class ChatListController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    listenToSessions(); // 🔥 real-time listener
+    listenToSessions();
   }
 
-  // ✅ REAL-TIME CHAT LIST
   void listenToSessions() {
+    _firestore
+        .collection('chat_sessions')
+        .orderBy('updatedAt', descending: true)
+        .snapshots()
+        .listen(
+          (snapshot) {
+            sessions = snapshot.docs.map((doc) {
+              final data = doc.data();
+              data['id'] = doc.id;
+              return data;
+            }).toList();
+
+            print(" Sessions: ${sessions.length}");
+            isLoading = false;
+            update();
+          },
+          onError: (e) {
+            print("Stream Error: $e");
+            isLoading = false;
+            update();
+          },
+        );
+  }
+
+  String formatTime(dynamic timestamp) {
+    if (timestamp == null) return '';
     try {
-      _firestore.collection('chat_sessions').orderBy('timestamp', descending: true).snapshots().listen((snapshot) {
-        sessions = snapshot.docs.map((doc) {
-          final data = doc.data();
-          data['id'] = doc.id;
-          return data;
-        }).toList();
+      final dt = (timestamp as Timestamp).toDate().toLocal();
+      final now = DateTime.now();
+      final today = DateTime(now.year, now.month, now.day);
+      final msgDay = DateTime(dt.year, dt.month, dt.day);
 
-        print("🔥 Sessions Updated: ${sessions.length}");
-
-        isLoading = false;
-        update();
-      });
-    } catch (e) {
-      print("❌ Firebase Error: $e");
-      isLoading = false;
-      update();
+      if (msgDay == today) {
+        final hour = dt.hour % 12 == 0 ? 12 : dt.hour % 12;
+        final minute = dt.minute.toString().padLeft(2, '0');
+        final period = dt.hour >= 12 ? 'PM' : 'AM';
+        return '$hour:$minute $period';
+      } else {
+        return '${dt.day}/${dt.month}';
+      }
+    } catch (_) {
+      return '';
     }
   }
 }

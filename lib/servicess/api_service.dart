@@ -1,13 +1,12 @@
 import 'dart:convert';
-import 'package:http/http.dart'as http;
-import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 const String baseUrl = 'https://astro.nextlogicsolution.id/api/v1';
 const String imageBaseUrl = 'https://astro.nextlogicsolution.id/storage/';
 const String tokenKey = 'auth_token';
-class ApiService {
 
+class ApiService {
   static String? _token;
 
   static Future<void> loadToken() async {
@@ -36,9 +35,10 @@ class ApiService {
     if (_token != null) 'Authorization': 'Bearer $_token',
   };
 
-
-
-  static Future<Map<String, dynamic>> post(String path, Map<String, dynamic> body) async {
+  static Future<Map<String, dynamic>> post(
+    String path,
+    Map<String, dynamic> body,
+  ) async {
     try {
       final res = await http.post(
         Uri.parse('$baseUrl$path'),
