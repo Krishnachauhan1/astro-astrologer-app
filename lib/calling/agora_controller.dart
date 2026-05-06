@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:agora_rtc_engine/agora_rtc_engine.dart';
 import 'package:astrosarthi_konnect_astrologer_app/servicess/api_service.dart';
 import 'package:get/get.dart';
@@ -24,8 +26,8 @@ class AgoraController extends GetxController {
   final bool isVideoCall;
   final String astrologerName;
   String get rateText => _ratePerMin != null ? '₹$_ratePerMin/min' : '';
-  // String get channelName => _agoraChannel ?? '';
-  String get channelName => '123';
+  String get channelName => _agoraChannel ?? '';
+  // String get channelName => '123';
   AgoraController({
     required this.astrologerId,
     required this.isVideoCall,
@@ -39,50 +41,27 @@ class AgoraController extends GetxController {
   }
 
   Future<void> _initiateCall() async {
-    isLoading = true;
-    errorMessage = '';
-    update();
+    final response = await ApiService.post('/initiate', {
+      'astrologer_id': astrologerId,
+      'type': isVideoCall ? 'video' : 'audio',
+    });
 
-    try {
-      final response = await ApiService.post('/call/initiate', {
-        'astrologer_id': astrologerId,
-        'type': isVideoCall ? 'video' : 'audio',
-      });
-      print('Call initiate response: $response');
-      if (response['success'] != true) {
-        final message = response['message'] ?? 'Call shuru nahi ho saka';
-        final errors = response['errors']?.toString() ?? '';
-        errorMessage = '$message\n$errors';
-        isLoading = false;
-        update();
-        return;
-      }
-      final data = response['data'];
-      if (data == null) {
-        errorMessage = 'Server se data nahi aaya';
-        isLoading = false;
-        update();
-        return;
-      }
-      _agoraAppId = data['agora_app_id']?.toString().trim();
-      // _agoraChannel = data['agora_channel']?.toString().trim();
-      _agoraChannel = '123';
-      final rawToken = data['agora_token']?.toString().trim() ?? '';
-      _agoraToken = _isValidAgoraToken(rawToken) ? rawToken : '';
-      final session = data['session'];
-      _callSessionId = session?['id'];
-      _ratePerMin = session?['rate_per_min'];
-      print(' AppId: $_agoraAppId');
-      print('Channel: $_agoraChannel');
-      print('Session: $_callSessionId');
-      print('Rate: $_ratePerMin/min');
-      await _requestPermissionsAndInit();
-    } catch (e) {
-      print('Call initiate error: $e');
-      errorMessage = 'Call shuru nahi ho saka: $e';
-      isLoading = false;
-      update();
-    }
+    print('astrologer id is ====$astrologerId');
+    print('Call initiate response: $response');
+
+    final data = response['data'];
+
+    _agoraAppId = "YOUR_AGORA_APP_ID"; // or from backend
+    _agoraChannel = data['agora_channel'];
+    _agoraToken = data['agora_token'];
+    _callSessionId = data['id'];
+    _ratePerMin = data['rate_per_min'];
+
+    print(' AppId: $_agoraAppId');
+    print('Channel: $_agoraChannel');
+    print('Session: $_callSessionId');
+    print('Rate: $_ratePerMin/min');
+    _startPolling();
   }
 
   bool _isValidAgoraToken(String token) {
@@ -103,6 +82,23 @@ class AgoraController extends GetxController {
       return;
     }
     await _initAgora();
+  }
+
+  void _startPolling() {
+    Timer.periodic(Duration(seconds: 2), (timer) async {
+      final res = await ApiService.get('/call/$_callSessionId/status');
+
+      print("STATUS: ${res['status']}");
+
+      if (res['status'] == 'active') {
+        await _requestPermissionsAndInit();
+      }
+
+      if (res['status'] == 'rejected') {
+        timer.cancel();
+        Get.back();
+      }
+    });
   }
 
   Future<void> _initAgora() async {
@@ -181,9 +177,8 @@ class AgoraController extends GetxController {
 
       await engine!.joinChannel(
         // token: finalToken,
-        token: '',
-        // channelId: cleanChannel,
-        channelId: "123",
+        token: _agoraToken!,
+        channelId: _agoraChannel!,
         uid: 0,
         options: ChannelMediaOptions(
           clientRoleType: ClientRoleType.clientRoleBroadcaster,
@@ -194,6 +189,8 @@ class AgoraController extends GetxController {
           autoSubscribeVideo: isVideoCall,
         ),
       );
+      print("FINAL CHANNEL: $_agoraChannel");
+      print("FINAL TOKEN: $_agoraToken");
       print(' joinChannel called!');
     } catch (e) {
       print('Agora init error: $e');

@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'package:astrosarthi_konnect_astrologer_app/app_theme.dart';
 import 'package:astrosarthi_konnect_astrologer_app/authentication/auth_controller.dart';
 import 'package:astrosarthi_konnect_astrologer_app/authentication/login_screen.dart';
@@ -16,7 +15,6 @@ import 'package:astrosarthi_konnect_astrologer_app/vastu/vastu_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
 import 'firebase_options.dart';
 
 class NavController extends GetxController {
@@ -30,13 +28,9 @@ class NavController extends GetxController {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-
   await ApiService.loadToken();
-
   await NotificationService().initialize();
-
   runApp(const AstrologyApp());
 }
 
@@ -57,7 +51,10 @@ class AstrologyApp extends StatelessWidget {
         Get.put(LiveController());
         Get.put(VastuController());
       }),
-      home: GetBuilder<AuthController>(builder: (auth) => auth.isLoggedIn ? const MainShell() : const LoginScreen()),
+      home: GetBuilder<AuthController>(
+        builder: (auth) =>
+            auth.isLoggedIn ? const MainShell() : const LoginScreen(),
+      ),
     );
   }
 }
@@ -68,7 +65,13 @@ class AstrologyApp extends StatelessWidget {
 class MainShell extends StatelessWidget {
   const MainShell({super.key});
 
-  static final _pages = [const HomeScreen(), ChatList(), const LiveScreen(), const VastuScreen(), const ProfileScreen()];
+  static final _pages = [
+    const HomeScreen(),
+    ChatList(),
+    const LiveScreen(),
+    const VastuScreen(),
+    const ProfileScreen(),
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -79,11 +82,23 @@ class MainShell extends StatelessWidget {
           currentIndex: nav.currentIndex,
           onTap: nav.changePage,
           items: const [
-            BottomNavigationBarItem(icon: Icon(Icons.home_rounded), label: 'Home'),
-            BottomNavigationBarItem(icon: Icon(Icons.chat_bubble_outline), label: 'Chat'),
-            BottomNavigationBarItem(icon: Icon(Icons.live_tv_rounded), label: 'Live'),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.home_rounded),
+              label: 'Home',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.chat_bubble_outline),
+              label: 'Chat',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.live_tv_rounded),
+              label: 'Live',
+            ),
             BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Vastu'),
-            BottomNavigationBarItem(icon: Icon(Icons.person_rounded), label: 'Profile'),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.person_rounded),
+              label: 'Profile',
+            ),
           ],
         ),
       ),

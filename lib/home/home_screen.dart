@@ -171,13 +171,13 @@ class HomeScreen extends StatelessWidget {
       'Call': () {
         Get.to(
           () => const AudioCallScreen(),
-          arguments: {'astrologerId': 1, 'astrologerName': 'Rahul Sharma'},
+          arguments: {'astrologerId': 4, 'astrologerName': 'Rahul Sharma'},
         );
       },
       'Video': () {
         Get.to(
           () => const VideoCallScreen(),
-          arguments: {'astrologerId': 1, 'astrologerName': 'Rahul Sharma'},
+          arguments: {'astrologerId': 4, 'astrologerName': 'Rahul Sharma'},
         );
       },
 
