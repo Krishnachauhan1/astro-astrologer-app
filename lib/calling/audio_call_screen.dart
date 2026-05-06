@@ -12,9 +12,10 @@ class AudioCallScreen extends StatelessWidget {
 
     Get.put(
       AgoraController(
-        astrologerId: args['astrologerId'] ?? 4,
+        // astrologerId: args['astrologerId'] ?? 4,
         isVideoCall: false,
         astrologerName: args['astrologerName'] ?? '',
+        callData: args,
       ),
     );
     print("ARGS ====== $args");
