@@ -327,23 +327,21 @@ class AgoraController extends GetxController {
 
   int? remoteUid;
   bool remoteJoined = false;
-  // String get channelName => '123';
   String? _agoraAppId;
   String? _agoraChannel;
   String? _agoraToken;
   int? _callSessionId;
   int? _ratePerMin;
-  //  String get rateText => _ratePerMin != null ? '₹$_ratePerMin/min' : '';
-  final int astrologerId;
   final bool isVideoCall;
   final String astrologerName;
 
   String get rateText => _ratePerMin != null ? '₹$_ratePerMin/min' : '';
   String get channelName => _agoraChannel ?? '';
-  // String get channelName => '123';
+
+  final Map<String, dynamic> callData;
 
   AgoraController({
-    required this.astrologerId,
+    required this.callData,
     required this.isVideoCall,
     required this.astrologerName,
   });
@@ -351,67 +349,14 @@ class AgoraController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    _initiateCall();
-  }
-
-  Future<void> _initiateCall() async {
-    final response = await ApiService.post('/initiate', {
-      'astrologer_id': astrologerId,
-      'type': isVideoCall ? 'video' : 'audio',
-    });
-
-    print('astrologer id is ====$astrologerId');
-    print('Call initiate response: $response');
-
-    final data = response['data'];
-
-    _agoraAppId = "YOUR_AGORA_APP_ID"; // or from backend
-    _agoraChannel = data['agora_channel'];
-    _agoraToken = data['agora_token'];
-    _callSessionId = data['id'];
-    _ratePerMin = data['rate_per_min'];
-
-    print(' AppId: $_agoraAppId');
-    print('Channel: $_agoraChannel');
-    print('Session: $_callSessionId');
-    print('Rate: $_ratePerMin/min');
-    _startPolling();
-  }
-
-  /// ✅ CALL START FUNCTION (IMPORTANT)
-  Future<void> initiateCall() async {
-    isLoading = true;
-    errorMessage = '';
-    update();
-
-    try {
-      final response = await ApiService.post('/call/initiate', {
-        'astrologer_id': astrologerId,
-        'type': isVideoCall ? 'video' : 'audio',
-      });
-
-      print('📞 Call initiate response: $response');
-
-      if (response['success'] != true) {
-        errorMessage = response['message'] ?? 'Call start failed';
-        isLoading = false;
-        update();
-        return;
-      }
-
-      final data = response['data'];
-
-      _agoraAppId = data['agora_app_id']?.toString();
-      _agoraChannel = data['agora_channel']?.toString();
-      _agoraToken = data['agora_token']?.toString();
-      _callSessionId = data['session']?['id'];
-
-      await _requestPermissionsAndInit();
-    } catch (e) {
-      errorMessage = 'Call error: $e';
-      isLoading = false;
-      update();
-    }
+    _agoraAppId = callData['agora_app_id'];
+    _agoraChannel = callData['channel'];
+    _agoraToken = callData['agora_token'];
+    _callSessionId = int.tryParse(callData['session_id'].toString());
+    print("APP ID = $_agoraAppId");
+    print("CHANNEL = $_agoraChannel");
+    print("TOKEN = $_agoraToken");
+    _requestPermissionsAndInit();
   }
 
   /// ✅ PERMISSION
@@ -431,86 +376,76 @@ class AgoraController extends GetxController {
     await _initAgora();
   }
 
-  void _startPolling() {
-    Timer.periodic(Duration(seconds: 2), (timer) async {
-      final res = await ApiService.get('/call/$_callSessionId/status');
-
-      print("STATUS: ${res['status']}");
-
-      if (res['status'] == 'active') {
-        await _requestPermissionsAndInit();
-      }
-
-      if (res['status'] == 'rejected') {
-        timer.cancel();
-        Get.back();
-      }
-    });
-  }
-
   Future<void> _initAgora() async {
-    try {
-      engine = createAgoraRtcEngine();
+    print(
+      'Agora init with AppId: $_agoraAppId, Channel: $_agoraChannel, Token: $_agoraToken',
+    );
+    // try {
+    engine = createAgoraRtcEngine();
 
-      await engine!.initialize(
-        RtcEngineContext(
-          appId: _agoraAppId!,
-          channelProfile: ChannelProfileType.channelProfileCommunication,
-        ),
-      );
+    await engine!.initialize(
+      RtcEngineContext(
+        appId: _agoraAppId!,
+        channelProfile: ChannelProfileType.channelProfileCommunication,
+      ),
+    );
 
-      engine!.registerEventHandler(
-        RtcEngineEventHandler(
-          onJoinChannelSuccess: (connection, elapsed) {
-            print('✅ Joined: ${connection.channelId}');
-            isInitialized = true;
-            isLoading = false;
-            update();
-          },
-          onUserJoined: (connection, uid, elapsed) {
-            remoteUid = uid;
-            remoteJoined = true;
-            update();
-          },
-          onUserOffline: (connection, uid, reason) {
-            remoteUid = null;
-            remoteJoined = false;
-            update();
-          },
-          onError: (err, msg) {
-            errorMessage = 'Error: $msg';
-            isLoading = false;
-            update();
-          },
-        ),
-      );
+    engine!.registerEventHandler(
+      RtcEngineEventHandler(
+        onJoinChannelSuccess: (connection, elapsed) {
+          print('✅ Joined: ${connection.channelId}');
+          isInitialized = true;
+          isLoading = false;
+          update();
+        },
+        onUserJoined: (connection, uid, elapsed) {
+          remoteUid = uid;
+          remoteJoined = true;
+          update();
+        },
+        onUserOffline: (connection, uid, reason) {
+          remoteUid = null;
+          remoteJoined = false;
+          update();
+        },
+        onError: (err, msg) {
+          print('Agora error: $err - $msg');
+          errorMessage = 'Error: $msg';
+          isLoading = false;
+          update();
+        },
+      ),
+    );
 
-      if (isVideoCall) {
-        await engine!.enableVideo();
-      } else {
-        await engine!.disableVideo();
-      }
-
-      await engine!.enableAudio();
-
-      await engine!.joinChannel(
-        token: _agoraToken ?? '',
-        channelId: _agoraChannel ?? '',
-        uid: 0,
-        options: const ChannelMediaOptions(
-          clientRoleType: ClientRoleType.clientRoleBroadcaster,
-          publishMicrophoneTrack: true,
-        ),
-      );
-
-      print("FINAL CHANNEL: $_agoraChannel");
-      print("FINAL TOKEN: $_agoraToken");
-      print(' joinChannel called!');
-    } catch (e) {
-      errorMessage = 'Agora init error: $e';
-      isLoading = false;
-      update();
+    if (isVideoCall) {
+      await engine!.enableVideo();
+    } else {
+      await engine!.disableVideo();
     }
+
+    await engine!.enableAudio();
+    print(
+      'Joining channel with token: $_agoraToken, channel: $_agoraChannel, ',
+    );
+    await engine!.joinChannel(
+      token: _agoraToken!,
+      channelId: _agoraChannel ?? '',
+      uid: 3,
+      options: const ChannelMediaOptions(
+        clientRoleType: ClientRoleType.clientRoleBroadcaster,
+        publishMicrophoneTrack: true,
+      ),
+    );
+
+    print("FINAL CHANNEL: $_agoraChannel");
+    print("FINAL TOKEN: $_agoraToken");
+    print(' joinChannel called!');
+    // } catch (e) {
+    // print('Agora init error: $e');
+    // errorMessage = 'Agora init error: $e';
+    isLoading = false;
+    update();
+    // }
   }
 
   /// 🔇 MUTE

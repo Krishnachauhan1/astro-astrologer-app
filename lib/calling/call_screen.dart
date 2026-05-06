@@ -1,7 +1,4 @@
-
-
 import 'dart:async';
-
 import 'package:astrosarthi_konnect_astrologer_app/calling/agora_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get_core/src/get_main.dart';
@@ -23,23 +20,24 @@ class _CallScreenState extends State<CallScreen> {
 
   int seconds = 0;
   Timer? timer;
-late AgoraController agora;
+  late AgoraController agora;
 
-@override
-void initState() {
-  super.initState();
+  @override
+  void initState() {
+    super.initState();
+    print("📞 Starting call with data: ${widget.data}");
+    agora = Get.put(
+      AgoraController(
+        // astrologerId: int.parse(widget.data['astrologer_id'].toString()),
+        isVideoCall: widget.data['type'] == 'video',
+        astrologerName: widget.data['caller_name'] ?? '',
+        callData: widget.data,
+      ),
+    );
 
-  agora = Get.put(
-    AgoraController(
-      astrologerId: int.parse(widget.data['astrologer_id'].toString()),
-      isVideoCall: widget.data['type'] == 'video',
-      astrologerName: widget.data['caller_name'] ?? '',
-    ),
-  );
-
-  /// 🔥 CALL START
-  agora.initiateCall();
-}
+    /// 🔥 CALL START
+    // agora.initiateCall();
+  }
 
   void startTimer() {
     timer = Timer.periodic(const Duration(seconds: 1), (timer) {
@@ -69,15 +67,14 @@ void initState() {
   @override
   Widget build(BuildContext context) {
     final callerName = widget.data['caller_name'] ?? "User";
-    final callerImage = widget.data['caller_image'] ??
-        "https://via.placeholder.com/150";
+    final callerImage =
+        widget.data['caller_image'] ?? "https://via.placeholder.com/150";
 
     return Scaffold(
       backgroundColor: Colors.black,
       body: SafeArea(
         child: Column(
           children: [
-
             const SizedBox(height: 40),
 
             /// 👤 Caller Image
@@ -112,7 +109,6 @@ void initState() {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-
                 /// 🔇 Mute
                 Column(
                   children: [
@@ -124,8 +120,9 @@ void initState() {
                       },
                       child: CircleAvatar(
                         radius: 30,
-                        backgroundColor:
-                            isMuted ? Colors.white : Colors.grey.shade800,
+                        backgroundColor: isMuted
+                            ? Colors.white
+                            : Colors.grey.shade800,
                         child: Icon(
                           isMuted ? Icons.mic_off : Icons.mic,
                           color: isMuted ? Colors.black : Colors.white,
@@ -153,14 +150,15 @@ void initState() {
                             : Colors.grey.shade800,
                         child: Icon(
                           Icons.volume_up,
-                          color:
-                              isSpeakerOn ? Colors.black : Colors.white,
+                          color: isSpeakerOn ? Colors.black : Colors.white,
                         ),
                       ),
                     ),
                     const SizedBox(height: 8),
-                    const Text("Speaker",
-                        style: TextStyle(color: Colors.white)),
+                    const Text(
+                      "Speaker",
+                      style: TextStyle(color: Colors.white),
+                    ),
                   ],
                 ),
 
@@ -176,8 +174,7 @@ void initState() {
                       ),
                     ),
                     const SizedBox(height: 8),
-                    const Text("End",
-                        style: TextStyle(color: Colors.white)),
+                    const Text("End", style: TextStyle(color: Colors.white)),
                   ],
                 ),
               ],
