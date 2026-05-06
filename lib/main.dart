@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:astrosarthi_konnect_astrologer_app/app_theme.dart';
 import 'package:astrosarthi_konnect_astrologer_app/authentication/auth_controller.dart';
 import 'package:astrosarthi_konnect_astrologer_app/authentication/login_screen.dart';
-import 'package:astrosarthi_konnect_astrologer_app/calling/agora_controller.dart';
 import 'package:astrosarthi_konnect_astrologer_app/chat/chat_list.dart';
 import 'package:astrosarthi_konnect_astrologer_app/home/home_screen.dart';
 import 'package:astrosarthi_konnect_astrologer_app/live_stream/live_controller.dart';
