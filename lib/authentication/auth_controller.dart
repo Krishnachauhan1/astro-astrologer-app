@@ -1,6 +1,8 @@
 import 'package:astrosarthi_konnect_astrologer_app/authentication/user_model.dart';
 import 'package:astrosarthi_konnect_astrologer_app/servicess/api_service.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:get/get.dart';
+
 class AuthController extends GetxController {
   bool isLoggedIn = false;
   bool isLoading = false;
@@ -10,6 +12,13 @@ class AuthController extends GetxController {
   void onInit() {
     super.onInit();
     _checkAuth();
+    FirebaseMessaging.instance.onTokenRefresh.listen((newToken) async {
+      if (ApiService.isLoggedIn) {
+        await ApiService.post('/user/update-fcm-token', {
+          "fcm_token": newToken,
+        });
+      }
+    });
   }
 
   Future<void> _checkAuth() async {
@@ -18,13 +27,17 @@ class AuthController extends GetxController {
       isLoggedIn = true;
       update();
       await fetchProfile();
+      await updateFcmToken();
     }
   }
 
   Future<bool> login(String email, String password) async {
     isLoading = true;
     update();
-    final res = await ApiService.post('/login', {'email': email, 'password': password});
+    final res = await ApiService.post('/login', {
+      'email': email,
+      'password': password,
+    });
     isLoading = false;
     if (res['data'] != null && res['data']['token'] != null) {
       await ApiService.saveToken(res['data']['token']);
@@ -33,10 +46,31 @@ class AuthController extends GetxController {
       }
       isLoggedIn = true;
       update();
+      await updateFcmToken();
       return true;
     }
     update();
     return false;
+  }
+
+  String? _lastSentToken;
+  Future<void> updateFcmToken() async {
+    try {
+      String? token = await FirebaseMessaging.instance.getToken();
+      if (token == null) {
+        await Future.delayed(const Duration(seconds: 2));
+        token = await FirebaseMessaging.instance.getToken();
+      }
+      if (token != null && token != _lastSentToken) {
+        final res = await ApiService.post('/user/update-fcm-token', {
+          "fcm_token": token,
+        });
+        _lastSentToken = token;
+        print("FCM token updated: $res");
+      }
+    } catch (e) {
+      print("FCM update error: $e");
+    }
   }
 
   Future<bool> register({
@@ -50,8 +84,7 @@ class AuthController extends GetxController {
     update();
 
     try {
-      final endpoint =
-      isAstrologer ? '/register-astrologer' : '/register';
+      final endpoint = isAstrologer ? '/register-astrologer' : '/register';
 
       // ✅ IMPORTANT: dynamic use karo
       final Map<String, dynamic> body = {
@@ -68,16 +101,13 @@ class AuthController extends GetxController {
         'experience_years': 1,
       };
 
-
-
       final res = await ApiService.post(endpoint, body);
       print(res);
       isLoading = false;
 
       // ✅ Success check
-      if (res['data'] != null &&
-          res['data']['token'] != null) {
 
+      if (res['data'] != null && res['data']['token'] != null) {
         // Save token
         await ApiService.saveToken(res['data']['token']);
 
@@ -88,12 +118,12 @@ class AuthController extends GetxController {
 
         isLoggedIn = true;
         update();
+        await updateFcmToken();
         return true;
       }
 
       update();
       return false;
-
     } catch (e) {
       isLoading = false;
       update();
@@ -111,6 +141,9 @@ class AuthController extends GetxController {
   }
 
   Future<void> logout() async {
+    try {
+      await ApiService.post('/user/update-fcm-token', {"fcm_token": ""});
+    } catch (_) {}
     await ApiService.post('/logout', {});
     await ApiService.clearToken();
     isLoggedIn = false;

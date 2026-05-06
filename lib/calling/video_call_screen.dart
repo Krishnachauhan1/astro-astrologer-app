@@ -13,7 +13,7 @@ class VideoCallScreen extends StatelessWidget {
 
     Get.put(
       AgoraController(
-        astrologerId: args['astrologerId'] ?? 1,
+        astrologerId: args['astrologerId'] ?? 4,
         isVideoCall: true,
         astrologerName: args['astrologerName'] ?? '',
       ),

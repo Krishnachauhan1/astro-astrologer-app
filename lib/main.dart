@@ -1,5 +1,4 @@
 import 'dart:io';
-
 import 'package:astrosarthi_konnect_astrologer_app/app_theme.dart';
 import 'package:astrosarthi_konnect_astrologer_app/authentication/auth_controller.dart';
 import 'package:astrosarthi_konnect_astrologer_app/authentication/login_screen.dart';
@@ -17,7 +16,6 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
 import 'firebase_options.dart';
 
 class NavController extends GetxController {
@@ -28,6 +26,7 @@ class NavController extends GetxController {
     update();
   }
 }
+
 Future<void> printDeviceInfo() async {
   final deviceInfo = DeviceInfoPlugin();
 
@@ -44,20 +43,19 @@ Future<void> printDeviceInfo() async {
     print("📱 Device ID: ${iosInfo.identifierForVendor}");
   }
 }
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-
   await ApiService.loadToken();
+
   // Get.find<AgoraController>()._initiateCall(); // Call initiation moved here for testing
   String? token = await FirebaseMessaging.instance.getToken();
   print("🔥 FCM Token: $token");
   await printDeviceInfo();
 
-print("🔥 FCM Token: $token");
+  print("🔥 FCM Token: $token");
   await NotificationService().initialize();
-
   runApp(const AstrologyApp());
 }
 
@@ -78,7 +76,10 @@ class AstrologyApp extends StatelessWidget {
         Get.put(LiveController());
         Get.put(VastuController());
       }),
-      home: GetBuilder<AuthController>(builder: (auth) => auth.isLoggedIn ? const MainShell() : const LoginScreen()),
+      home: GetBuilder<AuthController>(
+        builder: (auth) =>
+            auth.isLoggedIn ? const MainShell() : const LoginScreen(),
+      ),
     );
   }
 }
@@ -89,7 +90,13 @@ class AstrologyApp extends StatelessWidget {
 class MainShell extends StatelessWidget {
   const MainShell({super.key});
 
-  static final _pages = [const HomeScreen(), ChatList(), const LiveScreen(), const VastuScreen(), const ProfileScreen()];
+  static final _pages = [
+    const HomeScreen(),
+    ChatList(),
+    const LiveScreen(),
+    const VastuScreen(),
+    const ProfileScreen(),
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -100,11 +107,23 @@ class MainShell extends StatelessWidget {
           currentIndex: nav.currentIndex,
           onTap: nav.changePage,
           items: const [
-            BottomNavigationBarItem(icon: Icon(Icons.home_rounded), label: 'Home'),
-            BottomNavigationBarItem(icon: Icon(Icons.chat_bubble_outline), label: 'Chat'),
-            BottomNavigationBarItem(icon: Icon(Icons.live_tv_rounded), label: 'Live'),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.home_rounded),
+              label: 'Home',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.chat_bubble_outline),
+              label: 'Chat',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.live_tv_rounded),
+              label: 'Live',
+            ),
             BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Vastu'),
-            BottomNavigationBarItem(icon: Icon(Icons.person_rounded), label: 'Profile'),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.person_rounded),
+              label: 'Profile',
+            ),
           ],
         ),
       ),

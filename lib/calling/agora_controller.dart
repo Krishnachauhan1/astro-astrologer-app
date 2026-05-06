@@ -36,7 +36,7 @@
 //   @override
 //   void onInit() {
 //     super.onInit();
-//     _updateFcmToken() ; 
+//     _updateFcmToken() ;
 //     _listenFcmRefresh();
 //     _initiateCall();
 //   }
@@ -57,7 +57,6 @@
 //     }
 //   });
 // }
-
 
 // Future<void> _updateFcmToken() async {
 //   try {
@@ -80,19 +79,10 @@
 //   }
 // }
 
-
-
-
-
-
-
 //   Future<void> _initiateCall() async {
 //     isLoading = true;
 //     errorMessage = '';
 //     update();
-
-
-
 
 //     try {
 //       final response = await ApiService.post( '/call/initiate', {
@@ -317,6 +307,7 @@
 //   }
 // }
 
+import 'dart:async';
 import 'package:agora_rtc_engine/agora_rtc_engine.dart';
 import 'package:astrosarthi_konnect_astrologer_app/servicess/api_service.dart';
 import 'package:get/get.dart';
@@ -336,21 +327,56 @@ class AgoraController extends GetxController {
 
   int? remoteUid;
   bool remoteJoined = false;
-String get channelName => '123';
+  // String get channelName => '123';
   String? _agoraAppId;
   String? _agoraChannel;
   String? _agoraToken;
-  int? _callSessionId; int? _ratePerMin;
- String get rateText => _ratePerMin != null ? '₹$_ratePerMin/min' : '';
+  int? _callSessionId;
+  int? _ratePerMin;
+  //  String get rateText => _ratePerMin != null ? '₹$_ratePerMin/min' : '';
   final int astrologerId;
   final bool isVideoCall;
   final String astrologerName;
+
+  String get rateText => _ratePerMin != null ? '₹$_ratePerMin/min' : '';
+  String get channelName => _agoraChannel ?? '';
+  // String get channelName => '123';
 
   AgoraController({
     required this.astrologerId,
     required this.isVideoCall,
     required this.astrologerName,
   });
+
+  @override
+  void onInit() {
+    super.onInit();
+    _initiateCall();
+  }
+
+  Future<void> _initiateCall() async {
+    final response = await ApiService.post('/initiate', {
+      'astrologer_id': astrologerId,
+      'type': isVideoCall ? 'video' : 'audio',
+    });
+
+    print('astrologer id is ====$astrologerId');
+    print('Call initiate response: $response');
+
+    final data = response['data'];
+
+    _agoraAppId = "YOUR_AGORA_APP_ID"; // or from backend
+    _agoraChannel = data['agora_channel'];
+    _agoraToken = data['agora_token'];
+    _callSessionId = data['id'];
+    _ratePerMin = data['rate_per_min'];
+
+    print(' AppId: $_agoraAppId');
+    print('Channel: $_agoraChannel');
+    print('Session: $_callSessionId');
+    print('Rate: $_ratePerMin/min');
+    _startPolling();
+  }
 
   /// ✅ CALL START FUNCTION (IMPORTANT)
   Future<void> initiateCall() async {
@@ -381,7 +407,6 @@ String get channelName => '123';
       _callSessionId = data['session']?['id'];
 
       await _requestPermissionsAndInit();
-
     } catch (e) {
       errorMessage = 'Call error: $e';
       isLoading = false;
@@ -406,7 +431,23 @@ String get channelName => '123';
     await _initAgora();
   }
 
-  /// ✅ AGORA INIT
+  void _startPolling() {
+    Timer.periodic(Duration(seconds: 2), (timer) async {
+      final res = await ApiService.get('/call/$_callSessionId/status');
+
+      print("STATUS: ${res['status']}");
+
+      if (res['status'] == 'active') {
+        await _requestPermissionsAndInit();
+      }
+
+      if (res['status'] == 'rejected') {
+        timer.cancel();
+        Get.back();
+      }
+    });
+  }
+
   Future<void> _initAgora() async {
     try {
       engine = createAgoraRtcEngine();
@@ -462,6 +503,9 @@ String get channelName => '123';
         ),
       );
 
+      print("FINAL CHANNEL: $_agoraChannel");
+      print("FINAL TOKEN: $_agoraToken");
+      print(' joinChannel called!');
     } catch (e) {
       errorMessage = 'Agora init error: $e';
       isLoading = false;
@@ -507,7 +551,6 @@ String get channelName => '123';
       if (_callSessionId != null) {
         await ApiService.post('/call/$_callSessionId/end', {});
       }
-
     } catch (e) {
       print('End call error: $e');
     }
