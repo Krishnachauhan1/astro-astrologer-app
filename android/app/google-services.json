@@ -1,15 +1,16 @@
 {
   "project_info": {
     "project_number": "741037305385",
+    "firebase_url": "https://astro-2210b-default-rtdb.asia-southeast1.firebasedatabase.app",
     "project_id": "astro-2210b",
     "storage_bucket": "astro-2210b.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:741037305385:android:57180e7c2d392f0ce63638",
+        "mobilesdk_app_id": "1:741037305385:android:e137c934d104c6b8e63638",
         "android_client_info": {
-          "package_name": "com.astrosarthi_konnect_astrologer_app.astrosarthi_konnect_astrologer_app"
+          "package_name": "com.astrosarthi_konnect_astrologer_app"
         }
       },
       "oauth_client": [],
@@ -26,9 +27,9 @@
     },
     {
       "client_info": {
-        "mobilesdk_app_id": "1:741037305385:android:0c4ea56af963b6d4e63638",
+        "mobilesdk_app_id": "1:741037305385:android:211d403ef3df871de63638",
         "android_client_info": {
-          "package_name": "com.example.atrosarthi_konnect_app"
+          "package_name": "com.atrosarthi_konnect_app"
         }
       },
       "oauth_client": [],
