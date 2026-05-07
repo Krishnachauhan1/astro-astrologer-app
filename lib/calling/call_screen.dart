@@ -29,7 +29,7 @@ class _CallScreenState extends State<CallScreen> {
     agora = Get.put(
       AgoraController(
         // astrologerId: int.parse(widget.data['astrologer_id'].toString()),
-        isVideoCall: widget.data['type'] == 'video',
+        isVideoCall: widget.data['callType'] == 'video',
         astrologerName: widget.data['caller_name'] ?? '',
         callData: widget.data,
       ),

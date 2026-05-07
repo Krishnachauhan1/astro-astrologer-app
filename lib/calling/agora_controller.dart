@@ -430,7 +430,7 @@ class AgoraController extends GetxController {
     await engine!.joinChannel(
       token: _agoraToken!,
       channelId: _agoraChannel ?? '',
-      uid: 3,
+      uid: 1,
       options: const ChannelMediaOptions(
         clientRoleType: ClientRoleType.clientRoleBroadcaster,
         publishMicrophoneTrack: true,
