@@ -332,9 +332,11 @@ class AgoraController extends GetxController {
   String? _agoraToken;
   int? _callSessionId;
   int? _ratePerMin;
+  int? _userId;
   final bool isVideoCall;
   final String astrologerName;
-
+  int _seconds = 0;
+  Timer? _timer;
   String get rateText => _ratePerMin != null ? '₹$_ratePerMin/min' : '';
   String get channelName => _agoraChannel ?? '';
 
@@ -345,13 +347,23 @@ class AgoraController extends GetxController {
     required this.isVideoCall,
     required this.astrologerName,
   });
+  void _startTimer() {
+    _timer?.cancel();
+    _seconds = 0;
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      _seconds++;
+      update();
+    });
+  }
 
   @override
   void onInit() {
     super.onInit();
     _agoraAppId = callData['agora_app_id'];
+    print("FULL CALL DATA => $callData");
     _agoraChannel = callData['channel'];
     _agoraToken = callData['agora_token'];
+    _userId = int.tryParse(callData['uid'].toString());
     _callSessionId = int.tryParse(callData['session_id'].toString());
     print("APP ID = $_agoraAppId");
     print("CHANNEL = $_agoraChannel");
@@ -400,8 +412,10 @@ class AgoraController extends GetxController {
         },
         onUserJoined: (connection, uid, elapsed) {
           remoteUid = uid;
+          print("USER REMOTE JOINED => $uid");
+          print('user connection=> $connection');
           remoteJoined = true;
-          update();
+          _startTimer();
         },
         onUserOffline: (connection, uid, reason) {
           remoteUid = null;
@@ -428,15 +442,19 @@ class AgoraController extends GetxController {
       'Joining channel with token: $_agoraToken, channel: $_agoraChannel, ',
     );
     await engine!.joinChannel(
-      token: _agoraToken!,
+      token: _agoraToken ?? '',
       channelId: _agoraChannel ?? '',
-      uid: 1,
-      options: const ChannelMediaOptions(
+      uid: _userId ?? 0,
+      // uid: 1,
+      options: ChannelMediaOptions(
         clientRoleType: ClientRoleType.clientRoleBroadcaster,
         publishMicrophoneTrack: true,
+        publishCameraTrack: isVideoCall,
+        autoSubscribeAudio: true,
+        autoSubscribeVideo: isVideoCall,
       ),
     );
-
+    print("ASTRO UID => ${(_userId ?? 0)}");
     print("FINAL CHANNEL: $_agoraChannel");
     print("FINAL TOKEN: $_agoraToken");
     print(' joinChannel called!');
