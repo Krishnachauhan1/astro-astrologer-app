@@ -3,23 +3,35 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'agora_controller.dart';
 
-class AudioCallScreen extends StatelessWidget {
+class AudioCallScreen extends StatefulWidget {
   const AudioCallScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final args = Get.arguments as Map<String, dynamic>? ?? {};
+  State<AudioCallScreen> createState() => _AudioCallScreenState();
+}
 
+class _AudioCallScreenState extends State<AudioCallScreen> {
+  late final Map<String, dynamic> args;
+
+  @override
+  void initState() {
+    super.initState();
+    args = (Get.arguments as Map<String, dynamic>?) ?? {};
+    if (Get.isRegistered<AgoraController>()) {
+      Get.delete<AgoraController>(force: true);
+    }
     Get.put(
       AgoraController(
-        // astrologerId: args['astrologerId'] ?? 4,
         isVideoCall: false,
-        astrologerName: args['astrologerName'] ?? '',
+        astrologerName: args['astrologerName'] ?? args['caller_name'] ?? '',
         callData: args,
       ),
     );
     print("ARGS ====== $args");
-    print("ASTRO ID FROM ARGS ====== ${args['astrologerId']}");
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       body: GetBuilder<AgoraController>(
         builder: (ctrl) {
@@ -61,6 +73,7 @@ class AudioCallScreen extends StatelessWidget {
             );
           }
           if (ctrl.errorMessage.isNotEmpty) {
+            print("ERROR MESSAGE ====== ${ctrl.errorMessage}");
             return Container(
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
@@ -190,7 +203,13 @@ class AudioCallScreen extends StatelessWidget {
                           size: 14,
                         ),
                         const SizedBox(width: 6),
-                        const _CallTimer(),
+                        Text(
+                          ctrl.remoteJoined ? ctrl.formattedTime : '00:00',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 13,
+                          ),
+                        ),
                         if (ctrl.rateText.isNotEmpty)
                           Text(
                             '  •  ${ctrl.rateText}',
@@ -333,38 +352,6 @@ class _AstrologerAvatar extends StatelessWidget {
       ),
     );
   }
-}
-
-class _CallTimer extends StatefulWidget {
-  const _CallTimer();
-  @override
-  State<_CallTimer> createState() => _CallTimerState();
-}
-
-class _CallTimerState extends State<_CallTimer> {
-  int _seconds = 0;
-  late final _sub = Stream.periodic(const Duration(seconds: 1), (i) => i + 1)
-      .listen((s) {
-        if (mounted) setState(() => _seconds = s);
-      });
-
-  @override
-  void dispose() {
-    _sub.cancel();
-    super.dispose();
-  }
-
-  String get _formatted {
-    final m = (_seconds ~/ 60).toString().padLeft(2, '0');
-    final s = (_seconds % 60).toString().padLeft(2, '0');
-    return '$m:$s';
-  }
-
-  @override
-  Widget build(BuildContext context) => Text(
-    _formatted,
-    style: const TextStyle(color: Colors.white, fontSize: 13),
-  );
 }
 
 class _AudioControl extends StatelessWidget {

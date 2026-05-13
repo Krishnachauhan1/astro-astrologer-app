@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'package:astrosarthi_konnect_astrologer_app/calling/call_screen.dart';
+import 'package:astrosarthi_konnect_astrologer_app/calling/audio_call_screen.dart';
 import 'package:astrosarthi_konnect_astrologer_app/calling/video_call_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -14,18 +14,57 @@ class NotificationService {
 
   final FlutterLocalNotificationsPlugin _localNotifications =
       FlutterLocalNotificationsPlugin();
+
   Map<String, dynamic> _normalizeCallData(Map<String, dynamic> data) {
+    final type = (data['type'] ?? '').toString();
+    final rawCallType = data['callType'] ?? data['call_type'];
+    String callType;
+    if (rawCallType != null && rawCallType.toString().isNotEmpty) {
+      callType = rawCallType.toString();
+    } else if (type == 'video_call' || type == 'incoming_video_call') {
+      callType = 'video';
+    } else {
+      callType = 'audio';
+    }
+
+    final callerName =
+        data['caller_name'] ??
+        data['callerName'] ??
+        data['astrologerName'] ??
+        data['title'] ??
+        'Unknown Caller';
+
+    // Backend sends `caller_uid` (the customer's user id) for the astrologer
+    // to know who is calling. The astrologer side joins Agora with its OWN
+    // user id (resolved from AuthController in AgoraController), so we do NOT
+    // surface `caller_uid` as `uid` here.
+    final callerUid = data['caller_uid'] ?? data['callerUid'];
+
     return {
       ...data,
-      'channel': data['channel'] ?? data['agora_channel'] ?? data['channelId'],
-      'callerName':
-          data['callerName'] ??
-          data['caller_name'] ??
-          data['title'] ??
-          'Unknown Caller',
-      'caller_image': data['caller_image'] ?? data['callerImage'],
-      'callType':
-          data['callType'] ?? data['call_type'] ?? data['type'] ?? 'audio',
+      'agora_app_id':
+          data['agora_app_id'] ?? data['appId'] ?? data['agoraAppId'],
+      'agora_token':
+          data['agora_token'] ?? data['token'] ?? data['agoraToken'],
+      'channel':
+          data['channel'] ?? data['agora_channel'] ?? data['channelId'],
+      'session_id':
+          data['session_id'] ?? data['sessionId'] ?? data['callSessionId'],
+      'caller_uid': callerUid,
+      'callerUid': callerUid,
+      'rate_per_min': data['rate_per_min'] ?? data['ratePerMin'],
+      'callerName': callerName,
+      'caller_name': callerName,
+      'astrologerName': callerName,
+      'caller_image':
+          data['caller_image'] ??
+          data['callerImage'] ??
+          data['astrologerPhoto'],
+      'astrologerPhoto':
+          data['astrologerPhoto'] ??
+          data['caller_image'] ??
+          data['callerImage'],
+      'callType': callType,
     };
   }
 
@@ -67,14 +106,14 @@ class NotificationService {
         print("MESSAGE RECEIVED");
         print("MESSAGE = ${message.data}");
         final data = _normalizeCallData(message.data);
-        if (data['type'] == 'incoming_call' || data['type'] == 'call') {
+        if (_isCallMessage(data)) {
           showIncomingCallPopup(data, data['callType'].toString());
         }
       });
 
       FirebaseMessaging.onMessageOpenedApp.listen((message) {
         final data = _normalizeCallData(message.data);
-        if (data['type'] == 'incoming_call' || data['type'] == 'call') {
+        if (_isCallMessage(data)) {
           _openCallScreen(data);
         }
       });
@@ -83,7 +122,7 @@ class NotificationService {
           .getInitialMessage();
       if (initialMessage != null) {
         final data = _normalizeCallData(initialMessage.data);
-        if (data['type'] == 'call') {
+        if (_isCallMessage(data)) {
           Future.delayed(const Duration(seconds: 1), () {
             _openCallScreen(data);
           });
@@ -124,11 +163,20 @@ class NotificationService {
     }
   }
 
+  bool _isCallMessage(Map<String, dynamic> data) {
+    final type = (data['type'] ?? '').toString();
+    return type == 'incoming_call' ||
+        type == 'call' ||
+        type == 'video_call' ||
+        type == 'incoming_video_call' ||
+        (data['agora_app_id'] != null && data['channel'] != null);
+  }
+
   void _openCallScreen(Map<String, dynamic> data) {
     if (data['callType'] == 'video') {
       Get.to(() => const VideoCallScreen(), arguments: data);
     } else {
-      Get.to(() => CallScreen(data: data));
+      Get.to(() => const AudioCallScreen(), arguments: data);
     }
   }
 
@@ -178,7 +226,17 @@ class NotificationService {
                   GestureDetector(
                     onTap: () {
                       Get.back();
-                      Get.to(() => CallScreen(data: data));
+                      if (data['callType'] == 'video') {
+                        Get.to(
+                          () => const VideoCallScreen(),
+                          arguments: data,
+                        );
+                      } else {
+                        Get.to(
+                          () => const AudioCallScreen(),
+                          arguments: data,
+                        );
+                      }
                     },
                     child: CircleAvatar(
                       backgroundColor: Colors.green,
@@ -441,7 +499,10 @@ class NotificationService {
                           onTap: () {
                             Get.back();
 
-                            Get.to(() => CallScreen(data: data));
+                            Get.to(
+                              () => const AudioCallScreen(),
+                              arguments: data,
+                            );
                           },
 
                           child: Container(

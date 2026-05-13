@@ -1,7 +1,5 @@
 import 'package:astrosarthi_konnect_astrologer_app/app_theme.dart';
 import 'package:astrosarthi_konnect_astrologer_app/authentication/auth_controller.dart';
-import 'package:astrosarthi_konnect_astrologer_app/calling/audio_call_screen.dart';
-import 'package:astrosarthi_konnect_astrologer_app/calling/video_call_screen.dart';
 import 'package:astrosarthi_konnect_astrologer_app/live_stream/live_controller.dart';
 import 'package:astrosarthi_konnect_astrologer_app/live_stream/live_stream_model.dart';
 import 'package:astrosarthi_konnect_astrologer_app/main.dart';
@@ -166,21 +164,22 @@ class HomeScreen extends StatelessWidget {
     String label,
     Color color,
   ) {
+    void showIncomingOnlyInfo(String channel) {
+      Get.snackbar(
+        '$channel Calls',
+        'Incoming $channel calls from users will ring on this screen automatically.',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: AppColors.primaryDark,
+        colorText: Colors.white,
+        margin: const EdgeInsets.all(12),
+        duration: const Duration(seconds: 3),
+      );
+    }
+
     final actions = {
       'Chat': () => Get.find<NavController>().changePage(1),
-      'Call': () {
-        Get.to(
-          () => const AudioCallScreen(),
-          arguments: {'astrologerId': 4, 'astrologerName': 'Rahul Sharma'},
-        );
-      },
-      'Video': () {
-        Get.to(
-          () => const VideoCallScreen(),
-          arguments: {'astrologerId': 4, 'astrologerName': 'Rahul Sharma'},
-        );
-      },
-
+      'Call': () => showIncomingOnlyInfo('Audio'),
+      'Video': () => showIncomingOnlyInfo('Video'),
       'Vastu': () => Get.to(() => const VastuScreen()),
     };
 

@@ -1,314 +1,6 @@
-// import 'package:agora_rtc_engine/agora_rtc_engine.dart';
-// import 'package:astrosarthi_konnect_astrologer_app/servicess/api_service.dart';
-// import 'package:firebase_messaging/firebase_messaging.dart';
-// import 'package:get/get.dart';
-// import 'package:permission_handler/permission_handler.dart';
-
-// class AgoraController extends GetxController {
-//   RtcEngine? engine;
-//   bool isLoading = true;
-//   bool isInitialized = false;
-//   String errorMessage = '';
-//   bool isMuted = false;
-//   bool isVideoOn = true;
-//   bool isSpeakerOn = true;
-//   bool isFrontCamera = true;
-//   int? remoteUid;
-//   bool remoteJoined = false;
-//   String? _agoraAppId;
-//   String? _agoraChannel;
-//   String? _agoraToken;
-//   int? _callSessionId;
-//   int? _ratePerMin;
-//   bool _callEnded = false;
-//   final int astrologerId;
-//   final bool isVideoCall;
-//   final String astrologerName;
-//   String get rateText => _ratePerMin != null ? '₹$_ratePerMin/min' : '';
-//   //  String get channelName => _agoraChannel ?? '';
-//   String get channelName => '123';
-//   AgoraController({
-//     required this.astrologerId,
-//     required this.isVideoCall,
-//     required this.astrologerName,
-//   });
-
-//   @override
-//   void onInit() {
-//     super.onInit();
-//     _updateFcmToken() ;
-//     _listenFcmRefresh();
-//     _initiateCall();
-//   }
-
-// void _listenFcmRefresh() {
-//   FirebaseMessaging.instance.onTokenRefresh.listen((newToken) async {
-//     try {
-//       print('FCM Token Refreshed: $newToken');
-
-//       await ApiService.post(
-//         '/user/update-fcm-token',
-//         {
-//           "fcm_token": newToken,
-//         },
-//       );
-//     } catch (e) {
-//       print('FCM refresh error: $e');
-//     }
-//   });
-// }
-
-// Future<void> _updateFcmToken() async {
-//   try {
-//     String? token = await FirebaseMessaging.instance.getToken();
-
-//     if (token != null && token.isNotEmpty) {
-//       print('FCM Token: $token');
-
-//       await ApiService.post(
-//         '/user/update-fcm-token',
-//         {
-//           "fcm_token": token,
-//         },
-//       );
-
-//       print('FCM token updated successfully');
-//     }
-//   } catch (e) {
-//     print('FCM update error: $e');
-//   }
-// }
-
-//   Future<void> _initiateCall() async {
-//     isLoading = true;
-//     errorMessage = '';
-//     update();
-
-//     try {
-//       final response = await ApiService.post( '/call/initiate', {
-//         'astrologer_id': astrologerId,
-//         'type': isVideoCall ? 'video' : 'audio',
-//       });
-//       print('Call initiate response: $response');
-//       if (response['success'] != true) {
-//         final message = response['message'] ?? 'Call shuru nahi ho saka';
-//         final errors = response['errors']?.toString() ?? '';
-//         errorMessage = '$message\n$errors';
-//         isLoading = false;
-//         update();
-//         return;
-//       }
-//       final data = response['data'];
-//       if (data == null) {
-//         errorMessage = 'Server se data nahi aaya';
-//         isLoading = false;
-//         update();
-//         return;
-//       }
-//       _agoraAppId = data['agora_app_id']?.toString().trim();
-//       // _agoraChannel = data['agora_channel']?.toString().trim();
-//       _agoraChannel = '123';
-//       final rawToken = data['agora_token']?.toString().trim() ?? '';
-//       _agoraToken = _isValidAgoraToken(rawToken) ? rawToken : '';
-//       final session = data['session'];
-//       _callSessionId = session?['id'];
-//       _ratePerMin = session?['rate_per_min'];
-//       print(' AppId: $_agoraAppId');
-//       print('Channel: $_agoraChannel');
-//       print('Session: $_callSessionId');
-//       print('Rate: $_ratePerMin/min');
-//       await _requestPermissionsAndInit();
-//     } catch (e) {
-//       print('Call initiate error: $e');
-//       errorMessage = 'Call shuru nahi ho saka: $e';
-//       isLoading = false;
-//       update();
-//     }
-//   }
-
-//   bool _isValidAgoraToken(String token) {
-//     return token.isNotEmpty && token.startsWith('007');
-//   }
-
-//   Future<void> _requestPermissionsAndInit() async {
-//     final permissions = [Permission.microphone];
-//     if (isVideoCall) permissions.add(Permission.camera);
-//     final statuses = await permissions.request();
-//     print('Permissions: $statuses');
-
-//     // Permission check
-//     if (statuses[Permission.microphone] != PermissionStatus.granted) {
-//       errorMessage = 'Microphone permission denied';
-//       isLoading = false;
-//       update();
-//       return;
-//     }
-//     await _initAgora();
-//   }
-
-//   Future<void> _initAgora() async {
-//     if (_agoraAppId == null || _agoraAppId!.isEmpty) {
-//       errorMessage = 'Agora App ID nahi mila.';
-//       isLoading = false;
-//       update();
-//       return;
-//     }
-
-//     final cleanAppId = _agoraAppId!
-//         .trim()
-//         .replaceAll(RegExp(r'[^\x20-\x7E]'), '')
-//         .replaceAll(RegExp(r'\s+'), '');
-
-//     if (cleanAppId.length != 32) {
-//       errorMessage = 'App ID invalid (length: ${cleanAppId.length})';
-//       isLoading = false;
-//       update();
-//       return;
-//     }
-
-//     try {
-//       engine = createAgoraRtcEngine();
-//       await engine!.initialize(
-//         RtcEngineContext(
-//           appId: cleanAppId,
-//           channelProfile: ChannelProfileType.channelProfileCommunication,
-//         ),
-//       );
-//       print('Agora engine initialized!');
-//       engine!.registerEventHandler(
-//         RtcEngineEventHandler(
-//           onJoinChannelSuccess: (connection, elapsed) {
-//             print(' Joined............... ${connection.channelId}');
-//             isInitialized = true;
-//             isLoading = false;
-//             engine?.setEnableSpeakerphone(isSpeakerOn).catchError((e) {
-//               print('Speaker set error: $e');
-//             });
-//             update();
-//           },
-//           onUserJoined: (connection, uid, elapsed) {
-//             print('Remote joined=======$uid');
-//             remoteUid = uid;
-//             remoteJoined = true;
-//             update();
-//           },
-//           onUserOffline: (connection, uid, reason) {
-//             remoteUid = null;
-//             remoteJoined = false;
-//             update();
-//           },
-//           onError: (err, msg) {
-//             print('Agora error=========== $err : $msg');
-//             errorMessage = 'Error ($err): $msg';
-//             isLoading = false;
-//             update();
-//           },
-//         ),
-//       );
-
-//       if (isVideoCall) {
-//         await engine!.enableVideo();
-//         await engine!.enableAudio();
-//         await engine!.startPreview();
-//       } else {
-//         await engine!.enableAudio();
-//         await engine!.disableVideo();
-//       }
-
-//       // final cleanChannel = _agoraChannel!.trim().replaceAll(RegExp(r'\s+'), '');
-//       final finalToken = _agoraToken ?? '';
-//       // print('Channel============ "$cleanChannel"');
-//       print('Token================$finalToken');
-
-//       await engine!.joinChannel(
-//         // token: finalToken,
-//         token: '',
-//         // channelId: cleanChannel,
-//         channelId: "123",
-//         uid: 0,
-//         options: ChannelMediaOptions(
-//           clientRoleType: ClientRoleType.clientRoleBroadcaster,
-//           channelProfile: ChannelProfileType.channelProfileCommunication,
-//           publishMicrophoneTrack: true,
-//           publishCameraTrack: isVideoCall,
-//           autoSubscribeAudio: true,
-//           autoSubscribeVideo: isVideoCall,
-//         ),
-//       );
-//       print(' joinChannel called!');
-//     } catch (e) {
-//       print('Agora init error: $e');
-//       errorMessage = 'Connection fail: $e';
-//       isLoading = false;
-//       update();
-//     }
-//   }
-
-//   Future<void> toggleSpeaker() async {
-//     isSpeakerOn = !isSpeakerOn;
-//     try {
-//       await engine?.setEnableSpeakerphone(isSpeakerOn);
-//     } catch (e) {
-//       print('Speaker toggle error======== $e');
-//     }
-//     update();
-//   }
-
-//   Future<void> toggleMute() async {
-//     isMuted = !isMuted;
-//     await engine?.muteLocalAudioStream(isMuted);
-//     update();
-//   }
-
-//   Future<void> toggleVideo() async {
-//     isVideoOn = !isVideoOn;
-//     await engine?.muteLocalVideoStream(!isVideoOn);
-//     update();
-//   }
-
-//   Future<void> switchCamera() async {
-//     isFrontCamera = !isFrontCamera;
-//     await engine?.switchCamera();
-//     update();
-//   }
-
-//   Future<void> endCall() async {
-//     if (_callEnded) return;
-//     _callEnded = true;
-
-//     try {
-//       await engine?.leaveChannel();
-//       await engine?.release();
-//       engine = null;
-//     } catch (e) {
-//       print('Engine release error========== $e');
-//     }
-
-//     // API call end
-//     if (_callSessionId != null) {
-//       try {
-//         final response = await ApiService.post('/call/$_callSessionId/end', {});
-//         print('Call end response ======= $response');
-//       } catch (e) {
-//         print('Call end error ======= $e');
-//       }
-//     }
-
-//     Get.back();
-//   }
-
-//   @override
-//   void onClose() {
-//     if (!_callEnded) {
-//       engine?.leaveChannel();
-//       engine?.release();
-//     }
-//     super.onClose();
-//   }
-// }
-
 import 'dart:async';
 import 'package:agora_rtc_engine/agora_rtc_engine.dart';
+import 'package:astrosarthi_konnect_astrologer_app/authentication/auth_controller.dart';
 import 'package:astrosarthi_konnect_astrologer_app/servicess/api_service.dart';
 import 'package:get/get.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -316,7 +8,7 @@ import 'package:permission_handler/permission_handler.dart';
 class AgoraController extends GetxController {
   RtcEngine? engine;
 
-  bool isLoading = false;
+  bool isLoading = true;
   bool isInitialized = false;
   String errorMessage = '';
 
@@ -327,16 +19,22 @@ class AgoraController extends GetxController {
 
   int? remoteUid;
   bool remoteJoined = false;
+
   String? _agoraAppId;
   String? _agoraChannel;
   String? _agoraToken;
   int? _callSessionId;
   int? _ratePerMin;
-  int? _userId;
+  int? _joinUid;
+  int? _expectedRemoteUid;
+
   final bool isVideoCall;
   final String astrologerName;
+
   int _seconds = 0;
   Timer? _timer;
+  bool _callEnded = false;
+
   String get rateText => _ratePerMin != null ? '₹$_ratePerMin/min' : '';
   String get channelName => _agoraChannel ?? '';
 
@@ -347,6 +45,7 @@ class AgoraController extends GetxController {
     required this.isVideoCall,
     required this.astrologerName,
   });
+
   void _startTimer() {
     _timer?.cancel();
     _seconds = 0;
@@ -365,19 +64,62 @@ class AgoraController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    _agoraAppId = callData['agora_app_id'];
     print("FULL CALL DATA => $callData");
-    _agoraChannel = callData['channel'];
-    _agoraToken = callData['agora_token'];
-    _userId = int.tryParse(callData['uid'].toString());
-    _callSessionId = int.tryParse(callData['session_id'].toString());
+
+    _agoraAppId = (callData['agora_app_id'] ?? callData['appId'] ?? '')
+        ?.toString()
+        .trim();
+    _agoraChannel = (callData['channel'] ?? callData['agora_channel'] ?? '')
+        ?.toString()
+        .trim();
+    _agoraToken = (callData['agora_token'] ?? callData['token'] ?? '')
+        ?.toString()
+        .trim();
+
+    // IMPORTANT: The backend generates the FCM-delivered token bound to the
+    // ASTROLOGER's own user id ($astrologer->id on the server). So this side
+    // must join Agora with the logged-in astrologer's id, NOT with the
+    // `uid`/`caller_uid` field from the FCM payload (those refer to the
+    // customer / are informational only).
+    final loggedInAstrologerId = _resolveLoggedInAstrologerId();
+    _joinUid = loggedInAstrologerId;
+
+    // The remote peer (customer) joins with their own user_id, which the
+    // backend sends as `caller_uid` in the FCM payload. Use it to recognize
+    // the remote when they appear.
+    _expectedRemoteUid = int.tryParse(
+      (callData['caller_uid'] ?? callData['callerUid'] ?? '').toString(),
+    );
+
+    _callSessionId = int.tryParse(
+      (callData['session_id'] ?? callData['sessionId'] ?? '').toString(),
+    );
+    _ratePerMin = int.tryParse(
+      (callData['rate_per_min'] ?? callData['ratePerMin'] ?? '').toString(),
+    );
+
     print("APP ID = $_agoraAppId");
     print("CHANNEL = $_agoraChannel");
     print("TOKEN = $_agoraToken");
+    print("JOIN UID (astrologer) = $_joinUid");
+    print("EXPECTED REMOTE UID (caller) = $_expectedRemoteUid");
+
     _requestPermissionsAndInit();
   }
 
-  /// ✅ PERMISSION
+  int? _resolveLoggedInAstrologerId() {
+    try {
+      if (Get.isRegistered<AuthController>()) {
+        final auth = Get.find<AuthController>();
+        final id = auth.user?.id;
+        if (id != null && id > 0) return id;
+      }
+    } catch (e) {
+      print('resolveLoggedInAstrologerId error: $e');
+    }
+    return null;
+  }
+
   Future<void> _requestPermissionsAndInit() async {
     final permissions = [Permission.microphone];
     if (isVideoCall) permissions.add(Permission.camera);
@@ -391,92 +133,31 @@ class AgoraController extends GetxController {
       return;
     }
 
+    if (isVideoCall && status[Permission.camera] != PermissionStatus.granted) {
+      errorMessage = 'Camera permission denied';
+      isLoading = false;
+      update();
+      return;
+    }
+
     await _initAgora();
   }
 
-  // Future<void> _initAgora() async {
-  //   print(
-  //     'Agora init with AppId: $_agoraAppId, Channel: $_agoraChannel, Token: $_agoraToken',
-  //   );
-  //   // try {
-  //   engine = createAgoraRtcEngine();
-
-  //   await engine!.initialize(
-  //     RtcEngineContext(
-  //       appId: _agoraAppId!,
-  //       channelProfile: ChannelProfileType.channelProfileCommunication,
-  //     ),
-  //   );
-
-  //   engine!.registerEventHandler(
-  //     RtcEngineEventHandler(
-  //       onJoinChannelSuccess: (connection, elapsed) {
-  //         print('✅ Joined: ${connection.channelId}');
-  //         isInitialized = true;
-  //         isLoading = false;
-  //         update();
-  //       },
-  //       onUserJoined: (connection, uid, elapsed) {
-  //         remoteUid = uid;
-  //         print("USER REMOTE JOINED => $uid");
-  //         print('user connection=> $connection');
-  //         remoteJoined = true;
-  //         _startTimer();
-  //       },
-  //       onUserOffline: (connection, uid, reason) {
-  //         remoteUid = null;
-  //         remoteJoined = false;
-  //         update();
-  //       },
-  //       onError: (err, msg) {
-  //         print('Agora error: $err - $msg');
-  //         errorMessage = 'Error: $msg';
-  //         isLoading = false;
-  //         update();
-  //       },
-  //     ),
-  //   );
-
-  //   if (isVideoCall) {
-  //     await engine!.enableVideo();
-  //   } else {
-  //     await engine!.disableVideo();
-  //   }
-
-  //   await engine!.enableAudio();
-  //   print(
-  //     'Joining channel with token: $_agoraToken, channel: $_agoraChannel, ',
-  //   );
-  //   await engine!.joinChannel(
-  //     token: _agoraToken ?? '',
-  //     channelId: _agoraChannel ?? '',
-  //     // uid: _userId ?? 0,
-  //     uid: 0,
-  //     options: ChannelMediaOptions(
-  //       // clientRoleType: ClientRoleType.clientRoleBroadcaster,
-  //       publishMicrophoneTrack: true,
-  //       publishCameraTrack: isVideoCall,
-  //       autoSubscribeAudio: true,
-  //       autoSubscribeVideo: isVideoCall,
-  //     ),
-  //   );
-  //   print("ASTRO UID => ${(_userId ?? 0)}");
-  //   print("FINAL CHANNEL: $_agoraChannel");
-  //   print("FINAL TOKEN: $_agoraToken");
-  //   print(' joinChannel called!');
-  //   // } catch (e) {
-  //   // print('Agora init error: $e');
-  //   // errorMessage = 'Agora init error: $e';
-  //   isLoading = false;
-  //   update();
-  //   // }
-  // }
   Future<void> _initAgora() async {
-    try {
-      // CLEAN OLD ENGINE
-      await engine?.release();
-      engine = null;
+    if (_agoraAppId == null || _agoraAppId!.isEmpty) {
+      errorMessage = 'Agora App ID missing';
+      isLoading = false;
+      update();
+      return;
+    }
+    if (_agoraChannel == null || _agoraChannel!.isEmpty) {
+      errorMessage = 'Agora channel missing';
+      isLoading = false;
+      update();
+      return;
+    }
 
+    try {
       engine = createAgoraRtcEngine();
 
       await engine!.initialize(
@@ -486,143 +167,264 @@ class AgoraController extends GetxController {
         ),
       );
 
-      // AUDIO CONFIG
-      await engine!.enableAudio();
-
-      await engine!.enableLocalAudio(true);
-
       await engine!.setClientRole(role: ClientRoleType.clientRoleBroadcaster);
 
-      // EVENTS
+      await engine!.enableAudio();
+      await engine!.enableLocalAudio(true);
+
+      if (isVideoCall) {
+        await engine!.enableVideo();
+        await engine!.enableLocalVideo(true);
+        await engine!.startPreview();
+      } else {
+        await engine!.disableVideo();
+      }
+
+      // setEnableSpeakerphone before joinChannel can fail with -3 (ERR_NOT_READY)
+      // on some devices. Use setDefaultAudioRouteToSpeakerphone here, and apply
+      // setEnableSpeakerphone after the channel is joined.
+      try {
+        await engine!.setDefaultAudioRouteToSpeakerphone(isSpeakerOn);
+      } catch (e) {
+        print('setDefaultAudioRouteToSpeakerphone error: $e');
+      }
+
       engine!.registerEventHandler(
         RtcEngineEventHandler(
           onJoinChannelSuccess: (connection, elapsed) {
-            print("ASTRO JOINED CHANNEL => ${connection.channelId}");
-
+            print(
+              "ASTRO JOINED CHANNEL => ${connection.channelId} localUid=${connection.localUid} elapsed=$elapsed",
+            );
             isInitialized = true;
             isLoading = false;
-
+            try {
+              engine?.muteAllRemoteAudioStreams(false);
+            } catch (e) {
+              print('muteAllRemoteAudioStreams error: $e');
+            }
+            try {
+              engine?.setEnableSpeakerphone(isSpeakerOn);
+            } catch (e) {
+              print('setEnableSpeakerphone (post-join) error: $e');
+            }
             update();
           },
-
+          onRejoinChannelSuccess: (connection, elapsed) {
+            print(
+              "ASTRO REJOINED CHANNEL => ${connection.channelId} localUid=${connection.localUid} elapsed=$elapsed",
+            );
+          },
+          onLeaveChannel: (connection, stats) {
+            print("ASTRO LEFT CHANNEL => ${connection.channelId}");
+          },
           onUserJoined: (connection, uid, elapsed) {
-            print("USER REMOTE JOINED => $uid");
-
+            print("USER REMOTE JOINED => $uid elapsed=$elapsed");
             remoteUid = uid;
             remoteJoined = true;
-
-            print("REMOTE UID => $remoteUid");
-            print("REMOTE JOINED => $remoteJoined");
-
             _startTimer();
-
+            try {
+              engine?.muteRemoteAudioStream(uid: uid, mute: false);
+            } catch (e) {
+              print('muteRemoteAudioStream error: $e');
+            }
             update();
           },
-
           onUserOffline: (connection, uid, reason) {
-            print("REMOTE USER OFFLINE => $uid");
-
+            print("REMOTE USER OFFLINE => $uid reason=$reason");
             remoteUid = null;
             remoteJoined = false;
-
+            _timer?.cancel();
             update();
+            endCall();
           },
-
           onConnectionStateChanged: (connection, state, reason) {
-            print("CONNECTION STATE => $state");
-            print("CONNECTION REASON => $reason");
+            print("CONNECTION STATE => $state reason=$reason");
+            // Common signature of UID collision (both peers joining with the
+            // same uid): rapid Interrupted <-> RejoinSuccess loop. Log it so
+            // backend can fix the uid assignment per peer.
+            if (reason ==
+                ConnectionChangedReasonType.connectionChangedBannedByServer) {
+              errorMessage =
+                  'Disconnected by server (possible duplicate uid). Please retry.';
+              isLoading = false;
+              update();
+            }
           },
-
+          onConnectionLost: (connection) {
+            print("CONNECTION LOST => ${connection.channelId}");
+          },
+          onTokenPrivilegeWillExpire: (connection, token) {
+            print("TOKEN WILL EXPIRE for ${connection.channelId}");
+          },
+          onRequestToken: (connection) {
+            print("AGORA REQUEST TOKEN for ${connection.channelId}");
+          },
           onRemoteAudioStateChanged:
               (connection, remoteUid, state, reason, elapsed) {
-                print("REMOTE AUDIO STATE => $state");
+                print(
+                  "REMOTE AUDIO STATE => uid=$remoteUid state=$state reason=$reason",
+                );
               },
-
+          onRemoteVideoStateChanged:
+              (connection, remoteUid, state, reason, elapsed) {
+                print("REMOTE VIDEO STATE => uid=$remoteUid state=$state");
+              },
           onError: (err, msg) {
-            print("AGORA ERROR => $err");
-            print("AGORA MESSAGE => $msg");
-
-            errorMessage = msg;
-
-            update();
+            print("AGORA ERROR => code=$err msg=$msg");
+            // Non-fatal errors during the call should not blow up the UI.
+            // Surface only fatal codes (e.g. invalid token / banned).
+            if (err == ErrorCodeType.errInvalidToken ||
+                err == ErrorCodeType.errTokenExpired ||
+                err == ErrorCodeType.errInvalidAppId ||
+                err == ErrorCodeType.errInvalidChannelName) {
+              errorMessage = 'Call connection failed ($err). $msg';
+              isLoading = false;
+              update();
+            }
           },
         ),
       );
 
-      // JOIN CHANNEL
+      // joinChannel: the backend (CallController@sendIncomingCallNotification)
+      // generates the FCM-delivered token bound to the astrologer's user id.
+      // So we MUST join with that same id, or Agora will return
+      // errInvalidToken. Reading from AuthController guarantees the join uid
+      // and the token's signed uid match.
+      final joinUid = _joinUid;
+      if (joinUid == null || joinUid <= 0) {
+        errorMessage =
+            'Cannot start call: astrologer not logged in. Please re-login.';
+        isLoading = false;
+        update();
+        return;
+      }
+      print(
+        "ASTRO joinChannel => channel=$_agoraChannel uid=$joinUid tokenLen=${_agoraToken?.length ?? 0}",
+      );
       await engine!.joinChannel(
         token: _agoraToken ?? '',
-        channelId: _agoraChannel ?? '',
-
-        // ASTRO SIDE
-        uid: 0,
-
+        channelId: _agoraChannel!,
+        uid: joinUid,
         options: ChannelMediaOptions(
+          channelProfile: ChannelProfileType.channelProfileCommunication,
           publishMicrophoneTrack: true,
+          publishCameraTrack: isVideoCall,
           autoSubscribeAudio: true,
-          autoSubscribeVideo: false,
+          autoSubscribeVideo: isVideoCall,
         ),
       );
 
       print("ASTRO joinChannel called!");
     } catch (e) {
       print("ASTRO INIT ERROR => $e");
-
-      errorMessage = e.toString();
-
+      errorMessage = 'Connection failed: $e';
+      isLoading = false;
       update();
     }
   }
 
-  /// 🔇 MUTE
   void toggleMute() async {
     isMuted = !isMuted;
-    await engine?.muteLocalAudioStream(isMuted);
+    try {
+      await engine?.muteLocalAudioStream(isMuted);
+    } catch (e) {
+      print('Mute error: $e');
+    }
     update();
   }
 
-  /// 🔊 SPEAKER
   void toggleSpeaker() async {
     isSpeakerOn = !isSpeakerOn;
-    await engine?.setEnableSpeakerphone(isSpeakerOn);
+    try {
+      await engine?.setEnableSpeakerphone(isSpeakerOn);
+    } catch (e) {
+      print('Speaker error: $e');
+    }
     update();
   }
 
-  /// 🎥 VIDEO
   void toggleVideo() async {
     isVideoOn = !isVideoOn;
-    await engine?.muteLocalVideoStream(!isVideoOn);
+    try {
+      await engine?.muteLocalVideoStream(!isVideoOn);
+      await engine?.enableLocalVideo(isVideoOn);
+    } catch (e) {
+      print('Video toggle error: $e');
+    }
     update();
   }
 
-  /// 🔄 CAMERA
   void switchCamera() async {
     isFrontCamera = !isFrontCamera;
-    await engine?.switchCamera();
+    try {
+      await engine?.switchCamera();
+    } catch (e) {
+      print('Switch camera error: $e');
+    }
     update();
   }
 
-  /// ❌ END CALL
   Future<void> endCall() async {
-    try {
-      await engine?.leaveChannel();
-      await engine?.release();
-      engine = null;
+    if (_callEnded) return;
+    _callEnded = true;
 
-      if (_callSessionId != null) {
-        await ApiService.post('/call/$_callSessionId/end', {});
+    _timer?.cancel();
+    _timer = null;
+
+    final sessionId = _callSessionId;
+    final localEngine = engine;
+    engine = null;
+
+    try {
+      if (Get.key.currentState?.canPop() ?? false) {
+        Get.back();
       }
     } catch (e) {
-      print('End call error: $e');
+      print('Get.back error: $e');
     }
 
-    Get.back();
+    Future.microtask(() async {
+      try {
+        await localEngine?.leaveChannel();
+      } catch (e) {
+        print('leaveChannel error: $e');
+      }
+      try {
+        await localEngine?.release();
+      } catch (e) {
+        print('engine release error: $e');
+      }
+      if (sessionId != null) {
+        try {
+          await ApiService.post('/call/$sessionId/end', {});
+        } catch (e) {
+          print('Call end API error: $e');
+        }
+      }
+      try {
+        if (Get.isRegistered<AgoraController>()) {
+          Get.delete<AgoraController>(force: true);
+        }
+      } catch (_) {}
+    });
   }
 
   @override
   void onClose() {
-    engine?.leaveChannel();
-    engine?.release();
+    _timer?.cancel();
+    _timer = null;
+    if (!_callEnded) {
+      final localEngine = engine;
+      engine = null;
+      Future.microtask(() async {
+        try {
+          await localEngine?.leaveChannel();
+        } catch (_) {}
+        try {
+          await localEngine?.release();
+        } catch (_) {}
+      });
+    }
     super.onClose();
   }
 }
