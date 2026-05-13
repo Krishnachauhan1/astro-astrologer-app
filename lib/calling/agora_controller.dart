@@ -356,6 +356,12 @@ class AgoraController extends GetxController {
     });
   }
 
+  String get formattedTime {
+    final minutes = (_seconds ~/ 60).toString().padLeft(2, '0');
+    final seconds = (_seconds % 60).toString().padLeft(2, '0');
+    return "$minutes:$seconds";
+  }
+
   @override
   void onInit() {
     super.onInit();
@@ -388,82 +394,184 @@ class AgoraController extends GetxController {
     await _initAgora();
   }
 
+  // Future<void> _initAgora() async {
+  //   print(
+  //     'Agora init with AppId: $_agoraAppId, Channel: $_agoraChannel, Token: $_agoraToken',
+  //   );
+  //   // try {
+  //   engine = createAgoraRtcEngine();
+
+  //   await engine!.initialize(
+  //     RtcEngineContext(
+  //       appId: _agoraAppId!,
+  //       channelProfile: ChannelProfileType.channelProfileCommunication,
+  //     ),
+  //   );
+
+  //   engine!.registerEventHandler(
+  //     RtcEngineEventHandler(
+  //       onJoinChannelSuccess: (connection, elapsed) {
+  //         print('✅ Joined: ${connection.channelId}');
+  //         isInitialized = true;
+  //         isLoading = false;
+  //         update();
+  //       },
+  //       onUserJoined: (connection, uid, elapsed) {
+  //         remoteUid = uid;
+  //         print("USER REMOTE JOINED => $uid");
+  //         print('user connection=> $connection');
+  //         remoteJoined = true;
+  //         _startTimer();
+  //       },
+  //       onUserOffline: (connection, uid, reason) {
+  //         remoteUid = null;
+  //         remoteJoined = false;
+  //         update();
+  //       },
+  //       onError: (err, msg) {
+  //         print('Agora error: $err - $msg');
+  //         errorMessage = 'Error: $msg';
+  //         isLoading = false;
+  //         update();
+  //       },
+  //     ),
+  //   );
+
+  //   if (isVideoCall) {
+  //     await engine!.enableVideo();
+  //   } else {
+  //     await engine!.disableVideo();
+  //   }
+
+  //   await engine!.enableAudio();
+  //   print(
+  //     'Joining channel with token: $_agoraToken, channel: $_agoraChannel, ',
+  //   );
+  //   await engine!.joinChannel(
+  //     token: _agoraToken ?? '',
+  //     channelId: _agoraChannel ?? '',
+  //     // uid: _userId ?? 0,
+  //     uid: 0,
+  //     options: ChannelMediaOptions(
+  //       // clientRoleType: ClientRoleType.clientRoleBroadcaster,
+  //       publishMicrophoneTrack: true,
+  //       publishCameraTrack: isVideoCall,
+  //       autoSubscribeAudio: true,
+  //       autoSubscribeVideo: isVideoCall,
+  //     ),
+  //   );
+  //   print("ASTRO UID => ${(_userId ?? 0)}");
+  //   print("FINAL CHANNEL: $_agoraChannel");
+  //   print("FINAL TOKEN: $_agoraToken");
+  //   print(' joinChannel called!');
+  //   // } catch (e) {
+  //   // print('Agora init error: $e');
+  //   // errorMessage = 'Agora init error: $e';
+  //   isLoading = false;
+  //   update();
+  //   // }
+  // }
   Future<void> _initAgora() async {
-    print(
-      'Agora init with AppId: $_agoraAppId, Channel: $_agoraChannel, Token: $_agoraToken',
-    );
-    // try {
-    engine = createAgoraRtcEngine();
+    try {
+      // CLEAN OLD ENGINE
+      await engine?.release();
+      engine = null;
 
-    await engine!.initialize(
-      RtcEngineContext(
-        appId: _agoraAppId!,
-        channelProfile: ChannelProfileType.channelProfileCommunication,
-      ),
-    );
+      engine = createAgoraRtcEngine();
 
-    engine!.registerEventHandler(
-      RtcEngineEventHandler(
-        onJoinChannelSuccess: (connection, elapsed) {
-          print('✅ Joined: ${connection.channelId}');
-          isInitialized = true;
-          isLoading = false;
-          update();
-        },
-        onUserJoined: (connection, uid, elapsed) {
-          remoteUid = uid;
-          print("USER REMOTE JOINED => $uid");
-          print('user connection=> $connection');
-          remoteJoined = true;
-          _startTimer();
-        },
-        onUserOffline: (connection, uid, reason) {
-          remoteUid = null;
-          remoteJoined = false;
-          update();
-        },
-        onError: (err, msg) {
-          print('Agora error: $err - $msg');
-          errorMessage = 'Error: $msg';
-          isLoading = false;
-          update();
-        },
-      ),
-    );
+      await engine!.initialize(
+        RtcEngineContext(
+          appId: _agoraAppId!,
+          channelProfile: ChannelProfileType.channelProfileCommunication,
+        ),
+      );
 
-    if (isVideoCall) {
-      await engine!.enableVideo();
-    } else {
-      await engine!.disableVideo();
+      // AUDIO CONFIG
+      await engine!.enableAudio();
+
+      await engine!.enableLocalAudio(true);
+
+      await engine!.setClientRole(role: ClientRoleType.clientRoleBroadcaster);
+
+      // EVENTS
+      engine!.registerEventHandler(
+        RtcEngineEventHandler(
+          onJoinChannelSuccess: (connection, elapsed) {
+            print("ASTRO JOINED CHANNEL => ${connection.channelId}");
+
+            isInitialized = true;
+            isLoading = false;
+
+            update();
+          },
+
+          onUserJoined: (connection, uid, elapsed) {
+            print("USER REMOTE JOINED => $uid");
+
+            remoteUid = uid;
+            remoteJoined = true;
+
+            print("REMOTE UID => $remoteUid");
+            print("REMOTE JOINED => $remoteJoined");
+
+            _startTimer();
+
+            update();
+          },
+
+          onUserOffline: (connection, uid, reason) {
+            print("REMOTE USER OFFLINE => $uid");
+
+            remoteUid = null;
+            remoteJoined = false;
+
+            update();
+          },
+
+          onConnectionStateChanged: (connection, state, reason) {
+            print("CONNECTION STATE => $state");
+            print("CONNECTION REASON => $reason");
+          },
+
+          onRemoteAudioStateChanged:
+              (connection, remoteUid, state, reason, elapsed) {
+                print("REMOTE AUDIO STATE => $state");
+              },
+
+          onError: (err, msg) {
+            print("AGORA ERROR => $err");
+            print("AGORA MESSAGE => $msg");
+
+            errorMessage = msg;
+
+            update();
+          },
+        ),
+      );
+
+      // JOIN CHANNEL
+      await engine!.joinChannel(
+        token: _agoraToken ?? '',
+        channelId: _agoraChannel ?? '',
+
+        // ASTRO SIDE
+        uid: 0,
+
+        options: ChannelMediaOptions(
+          publishMicrophoneTrack: true,
+          autoSubscribeAudio: true,
+          autoSubscribeVideo: false,
+        ),
+      );
+
+      print("ASTRO joinChannel called!");
+    } catch (e) {
+      print("ASTRO INIT ERROR => $e");
+
+      errorMessage = e.toString();
+
+      update();
     }
-
-    await engine!.enableAudio();
-    print(
-      'Joining channel with token: $_agoraToken, channel: $_agoraChannel, ',
-    );
-    await engine!.joinChannel(
-      token: _agoraToken ?? '',
-      channelId: _agoraChannel ?? '',
-      uid: _userId ?? 0,
-      // uid: 1,
-      options: ChannelMediaOptions(
-        clientRoleType: ClientRoleType.clientRoleBroadcaster,
-        publishMicrophoneTrack: true,
-        publishCameraTrack: isVideoCall,
-        autoSubscribeAudio: true,
-        autoSubscribeVideo: isVideoCall,
-      ),
-    );
-    print("ASTRO UID => ${(_userId ?? 0)}");
-    print("FINAL CHANNEL: $_agoraChannel");
-    print("FINAL TOKEN: $_agoraToken");
-    print(' joinChannel called!');
-    // } catch (e) {
-    // print('Agora init error: $e');
-    // errorMessage = 'Agora init error: $e';
-    isLoading = false;
-    update();
-    // }
   }
 
   /// 🔇 MUTE
