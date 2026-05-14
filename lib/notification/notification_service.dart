@@ -103,8 +103,7 @@ class NotificationService {
 
       // 📩 FOREGROUND MESSAGE
       FirebaseMessaging.onMessage.listen((message) {
-        print("MESSAGE RECEIVED");
-        print("MESSAGE = ${message.data}");
+
         final data = _normalizeCallData(message.data);
         if (_isCallMessage(data)) {
           showIncomingCallPopup(data, data['callType'].toString());
