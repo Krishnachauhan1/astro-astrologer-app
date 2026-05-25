@@ -1,6 +1,5 @@
 import 'package:astrosarthi_konnect_astrologer_app/app_theme.dart';
 import 'package:astrosarthi_konnect_astrologer_app/authentication/auth_controller.dart';
-import 'package:astrosarthi_konnect_astrologer_app/live_stream/live_controller.dart';
 import 'package:astrosarthi_konnect_astrologer_app/main.dart';
 import 'package:astrosarthi_konnect_astrologer_app/vastu/vastu_screen.dart';
 import 'package:flutter/material.dart';
@@ -122,22 +121,6 @@ class HomeScreen extends StatelessWidget {
                   _horoscopeBanner(),
                   const SizedBox(height: 24),
 
-                  // Top Astrologers
-                  const SizedBox(height: 24),
-                  // Live Now
-                  _sectionTitle('Live Now 🔴'),
-                  const SizedBox(height: 12),
-                  GetBuilder<LiveController>(
-                    builder: (ctrl) => SizedBox(
-                      height: 130,
-                      child: ListView.separated(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: ctrl.streams.length,
-                        separatorBuilder: (_, __) => const SizedBox(width: 12),
-                        itemBuilder: (_, i) => _LiveCard(ctrl.streams[i]),
-                      ),
-                    ),
-                  ),
                   const SizedBox(height: 24),
                 ],
               ),
@@ -257,90 +240,3 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
-class _LiveCard extends StatelessWidget {
-  final Map<String, dynamic> s;
-  const _LiveCard(this.s, {super.key});
-
-  @override
-  @override
-  Widget build(BuildContext context) {
-    final astroName = (s['astrologer_name'] ?? 'Unknown').toString();
-
-    final title = (s['title'] ?? 'Untitled').toString();
-
-    final viewers = (s['viewers'] ?? 0).toString();
-
-    return Container(
-      width: 200,
-      decoration: BoxDecoration(
-        color: AppColors.primaryDark,
-        borderRadius: BorderRadius.circular(16),
-        gradient: const LinearGradient(
-          colors: [Color(0xFF003F3F), AppColors.primary],
-        ),
-      ),
-
-      padding: const EdgeInsets.all(14),
-
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-
-                decoration: BoxDecoration(
-                  color: AppColors.busy,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-
-                child: const Text(
-                  'LIVE',
-                  style: TextStyle(color: Colors.white, fontSize: 10),
-                ),
-              ),
-
-              const Spacer(),
-
-              const Icon(
-                Icons.remove_red_eye_outlined,
-                color: Colors.white70,
-                size: 13,
-              ),
-
-              const SizedBox(width: 4),
-
-              Text(
-                viewers,
-                style: const TextStyle(color: Colors.white70, fontSize: 11),
-              ),
-            ],
-          ),
-
-          const Spacer(),
-
-          Text(
-            title,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-
-          const SizedBox(height: 4),
-
-          Text(
-            astroName,
-            style: const TextStyle(color: AppColors.goldLight, fontSize: 11),
-          ),
-        ],
-      ),
-    );
-  }
-}

@@ -1,7 +1,5 @@
 import 'package:astrosarthi_konnect_astrologer_app/app_theme.dart';
 import 'package:astrosarthi_konnect_astrologer_app/live_stream/live_controller.dart';
-import 'package:astrosarthi_konnect_astrologer_app/live_stream/live_stream_model.dart';
-import 'package:astrosarthi_konnect_astrologer_app/servicess/api_service.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -10,199 +8,76 @@ class LiveScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GetBuilder(
-      init: LiveController(),
+    return GetBuilder<LiveController>(
       builder: (ctrl) => Scaffold(
         appBar: AppBar(
-          title: Row(
-            children: [
-              const Text('Live Sessions'),
-              Spacer(),
-              GestureDetector(
-                onTap: ctrl.startLive,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.15),
-                        blurRadius: 8,
-                      ),
-                    ],
-                  ),
-                  child: const Row(
-                    children: [
-                      Icon(
-                        Icons.videocam_rounded,
-                        color: AppColors.primary,
-                        size: 16,
-                      ),
-                      SizedBox(width: 6),
-                      Text(
-                        'Go Live',
-                        style: TextStyle(
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 13,
-                        ),
-                      ),
-                    ],
+          title: const Text('Go Live'),
+        ),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.videocam_rounded,
+                  size: 72,
+                  color: AppColors.primary.withOpacity(0.85),
+                ),
+                const SizedBox(height: 24),
+                const Text(
+                  'Start your live session',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary,
                   ),
                 ),
-              ),
-            ],
-          ),
-        ),
-        body: GetBuilder<LiveController>(
-          builder: (ctrl) => ctrl.isLoading
-              ? const Center(
-                  child: CircularProgressIndicator(color: AppColors.primary),
-                )
-              : RefreshIndicator(
-                  onRefresh: () async {
-                    await ctrl.fetchStreams();
-                  },
-                  color: AppColors.primary,
-                  child: ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: ctrl.streams.length,
-                    itemBuilder: (_, i) => _LiveListCard(ctrl.streams[i]),
+                const SizedBox(height: 12),
+                Text(
+                  'Users on the customer app can join your live. Other astrologers cannot see who else is live.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: AppColors.textPrimary.withOpacity(0.65),
+                    height: 1.4,
                   ),
                 ),
-        ),
-      ),
-    );
-  }
-}
-
-class _LiveListCard extends StatelessWidget {
-  final Map<String, dynamic> s;
-
-  const _LiveListCard(this.s, {super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final astroName = (s['astrologer_name'] ?? '').toString();
-    return Card(
-      margin: const EdgeInsets.only(bottom: 14),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(18),
-        onTap: () async {
-          final res = await ApiService.get('/live-streams/${s['id']}/join');
-          Get.snackbar(
-            'Joining Live',
-            'Joining ${s['title']}...',
-            backgroundColor: AppColors.primary,
-            colorText: Colors.white,
-          );
-        },
-        child: Container(
-          height: 160,
-          padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(18),
-            gradient: const LinearGradient(
-              colors: [Color(0xFF003F3F), AppColors.primaryLight],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
+                const SizedBox(height: 32),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    onPressed: ctrl.isLoading ? null : ctrl.startLive,
+                    icon: ctrl.isLoading
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Icon(Icons.videocam_rounded),
+                    label: Text(
+                      ctrl.isLoading ? 'Starting…' : 'Go Live',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 16,
+                      ),
+                    ),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.busy,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Text(
-                      '● LIVE',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  const Icon(
-                    Icons.remove_red_eye_outlined,
-                    color: Colors.white70,
-                    size: 14,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    '${s['viewers']} watching',
-                    style: const TextStyle(color: Colors.white70, fontSize: 12),
-                  ),
-                ],
-              ),
-              const Spacer(),
-              Text(
-                s['title'],
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 6),
-
-              Row(
-                children: [
-                  CircleAvatar(
-                    radius: 12,
-                    backgroundColor: Colors.white24,
-                    child: Text(
-                      astroName.isNotEmpty ? astroName[0] : '',
-                      style: const TextStyle(color: Colors.white, fontSize: 11),
-                    ),
-                  ),
-
-                  const SizedBox(width: 8),
-
-                  Text(
-                    astroName,
-                    style: const TextStyle(
-                      color: AppColors.goldLight,
-                      fontSize: 13,
-                    ),
-                  ),
-
-                  const Spacer(),
-
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 7,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.gold,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: const Text(
-                      'Join',
-                      style: TextStyle(
-                        color: AppColors.primaryDark,
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
           ),
         ),
       ),

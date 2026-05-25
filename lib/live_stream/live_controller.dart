@@ -16,7 +16,6 @@ class LiveController extends GetxController {
   int? agoraUid;
 
   bool isJoined = false;
-  List<Map<String, dynamic>> streams = [];
   bool isLoading = false;
   bool isLive = false;
   bool localUserJoined = false;
@@ -38,12 +37,6 @@ class LiveController extends GetxController {
     final parsed = int.tryParse(value.toString());
     if (parsed == null || parsed <= 0) return null;
     return parsed;
-  }
-
-  @override
-  void onInit() {
-    super.onInit();
-    fetchStreams();
   }
 
   @override
@@ -143,23 +136,6 @@ class LiveController extends GetxController {
     update();
   }
 
-  Future<void> fetchStreams() async {
-    isLoading = true;
-    update();
-    try {
-      final res = await ApiService.get('/live-streams');
-      print('live stream data $res');
-      final List<dynamic> data = res['data']?['data'] ?? [];
-      streams = data.isNotEmpty
-          ? data.map((e) => Map<String, dynamic>.from(e as Map)).toList()
-          : _mock();
-    } catch (_) {
-      streams = _mock();
-    }
-    isLoading = false;
-    update();
-  }
-
   Future<void> startLive({String title = 'Live Astrology Session'}) async {
     isLoading = true;
     update();
@@ -251,14 +227,4 @@ class LiveController extends GetxController {
     update();
   }
 
-  List<Map<String, dynamic>> _mock() => [
-    {
-      'id': 1,
-      'title': 'Shani Sade Sati — Upay aur Samadhan',
-      'astrologer_name': 'Pt Sharma',
-      'viewers': 340,
-      'agora_channel': '',
-      'agora_token': '',
-    },
-  ];
 }
