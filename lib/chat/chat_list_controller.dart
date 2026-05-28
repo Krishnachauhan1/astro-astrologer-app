@@ -80,6 +80,7 @@
 // }
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class ChatListController extends GetxController {
@@ -101,18 +102,27 @@ class ChatListController extends GetxController {
         .snapshots()
         .listen(
           (snapshot) {
-            sessions = snapshot.docs.map((doc) {
-              final data = doc.data();
-              data['id'] = doc.id;
-              return data;
-            }).toList();
+            sessions = snapshot.docs
+                .map((doc) {
+                  final data = doc.data();
+                  data['id'] = doc.id;
+                  return data;
+                })
+                // Defensive: if any "assistant" sessions accidentally land in
+                // `chat_sessions`, don't show them in Chat tab.
+                .where((s) {
+                  final t = (s['type'] ?? s['sessionType'] ?? '').toString().toLowerCase();
+                  final isAssistant = (s['isAssistant'] == true) || t == 'assistant';
+                  return !isAssistant;
+                })
+                .toList();
 
-            print(" Sessions: ${sessions.length}");
+            debugPrint(" Sessions: ${sessions.length}");
             isLoading = false;
             update();
           },
           onError: (e) {
-            print("Stream Error: $e");
+            debugPrint("Stream Error: $e");
             isLoading = false;
             update();
           },

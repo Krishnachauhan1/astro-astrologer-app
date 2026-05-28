@@ -85,30 +85,33 @@ class HomeScreen extends StatelessWidget {
                   // Quick Actions
                   _sectionTitle('Quick Consult'),
                   const SizedBox(height: 12),
-                  Row(
+                  GridView.count(
+                    crossAxisCount: 2,
+                    mainAxisSpacing: 12,
+                    crossAxisSpacing: 12,
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    childAspectRatio: 1.65,
                     children: [
-                      _quickAction(
+                      _quickActionTile(
                         context,
                         Icons.chat_bubble_rounded,
                         'Chat',
                         AppColors.primary,
                       ),
-                      const SizedBox(width: 12),
-                      _quickAction(
+                      _quickActionTile(
                         context,
                         Icons.call_rounded,
-                        'Call',
+                        'Audio Call',
                         AppColors.gold,
                       ),
-                      const SizedBox(width: 12),
-                      _quickAction(
+                      _quickActionTile(
                         context,
                         Icons.videocam_rounded,
-                        'Video',
+                        'Video Call',
                         AppColors.primaryLight,
                       ),
-                      const SizedBox(width: 12),
-                      _quickAction(
+                      _quickActionTile(
                         context,
                         Icons.home_work_rounded,
                         'Vastu',
@@ -116,11 +119,6 @@ class HomeScreen extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 24),
-                  // Horoscope banner
-                  _horoscopeBanner(),
-                  const SizedBox(height: 24),
-
                   const SizedBox(height: 24),
                 ],
               ),
@@ -140,7 +138,7 @@ class HomeScreen extends StatelessWidget {
     ),
   );
 
-  Widget _quickAction(
+  Widget _quickActionTile(
     BuildContext context,
     IconData icon,
     String label,
@@ -160,83 +158,53 @@ class HomeScreen extends StatelessWidget {
 
     final actions = {
       'Chat': () => Get.find<NavController>().changePage(1),
-      'Call': () => showIncomingOnlyInfo('Audio'),
-      'Video': () => showIncomingOnlyInfo('Video'),
+      'Audio Call': () => showIncomingOnlyInfo('Audio'),
+      'Video Call': () => showIncomingOnlyInfo('Video'),
       'Vastu': () => Get.to(() => const VastuScreen()),
     };
 
-    return Expanded(
-      child: GestureDetector(
-        onTap: actions[label] ?? () {},
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 14),
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(14),
-          ),
-          child: Column(
-            children: [
-              Icon(icon, color: color),
-              const SizedBox(height: 6),
-              Text(label),
-            ],
-          ),
+    return InkWell(
+      borderRadius: BorderRadius.circular(16),
+      onTap: actions[label] ?? () {},
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.10),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: color.withValues(alpha: 0.20)),
         ),
-      ),
-    );
-  }
-
-  Widget _horoscopeBanner() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF005F5F), Color(0xFF008080)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
-                Text(
-                  'Today\'s Horoscope',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                SizedBox(height: 6),
-                Text(
-                  'Stars align for new beginnings. Mercury in your 5th house brings creativity and joy.',
-                  style: TextStyle(
-                    color: AppColors.primarySurface,
-                    fontSize: 12,
-                  ),
-                  maxLines: 3,
-                ),
-                SizedBox(height: 12),
-                Text(
-                  'Read More →',
-                  style: TextStyle(
-                    color: AppColors.gold,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
+        child: Row(
+          children: [
+            Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.14),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Icon(icon, color: color),
             ),
-          ),
-          const SizedBox(width: 16),
-          const Icon(Icons.stars_rounded, color: AppColors.gold, size: 60),
-        ],
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                label,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Icon(
+              Icons.arrow_forward_ios_rounded,
+              size: 16,
+              color: AppColors.textPrimary.withValues(alpha: 0.35),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
-

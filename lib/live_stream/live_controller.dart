@@ -1,13 +1,22 @@
 import 'package:agora_rtc_engine/agora_rtc_engine.dart';
+import 'package:astrosarthi_konnect_astrologer_app/authentication/auth_controller.dart';
 import 'package:astrosarthi_konnect_astrologer_app/live_stream/host_screen.dart';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../servicess/api_service.dart';
 
 class LiveController extends GetxController {
+  static const _prefsKey = 'live_draft_session_v1';
+  static const _pendingEndKey = 'live_pending_end_v1';
+
   RtcEngine? engine;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _liveChatSub;
   String agoraAppId = '';
   String? agoraChannel;
   String? agoraToken;
@@ -23,6 +32,9 @@ class LiveController extends GetxController {
   int viewerCount = 0;
   int likeCount = 0;
   int? currentLiveId;
+  String? currentTitle;
+
+  bool get needsRecovery => isLive && engine == null;
 
   final List<Map<String, String>> comments = [];
   final TextEditingController commentCtrl = TextEditingController();
@@ -40,10 +52,115 @@ class LiveController extends GetxController {
   }
 
   @override
+  void onInit() {
+    super.onInit();
+    _flushPendingEnd();
+    _restoreDraft();
+  }
+
+  @override
   void onClose() {
+    _persistDraft();
+    _stopLiveChat();
     _releaseEngine();
     commentCtrl.dispose();
     super.onClose();
+  }
+
+  Future<void> _restoreDraft() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString(_prefsKey);
+      if (raw == null || raw.isEmpty) return;
+
+      final parts = raw.split('|');
+      if (parts.length < 5) return;
+
+      currentLiveId = _parsePositiveInt(parts[0]);
+      agoraAppId = parts[1];
+      agoraChannel = parts[2].isEmpty ? null : parts[2];
+      agoraToken = parts[3].isEmpty ? null : parts[3];
+      agoraUid = _parsePositiveInt(parts[4]);
+      currentTitle = parts.length >= 6 && parts[5].isNotEmpty ? parts[5] : null;
+
+      // Draft indicates "user started live". Engine is not restored here.
+      if (currentLiveId != null && agoraUid != null && agoraChannel != null) {
+        isLive = true;
+        _startLiveChat();
+      }
+      update();
+    } catch (_) {}
+  }
+
+  Future<void> _flushPendingEnd() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final id = _parsePositiveInt(prefs.getString(_pendingEndKey));
+      if (id == null) return;
+      await prefs.remove(_pendingEndKey);
+      unawaited(_endOnServer(id));
+    } catch (_) {}
+  }
+
+  CollectionReference<Map<String, dynamic>>? get _liveMessagesRef {
+    final id = currentLiveId;
+    if (id == null) return null;
+    return _firestore.collection('live_chats').doc(id.toString()).collection('messages');
+  }
+
+  void _stopLiveChat() {
+    _liveChatSub?.cancel();
+    _liveChatSub = null;
+  }
+
+  void _startLiveChat() {
+    _stopLiveChat();
+    final ref = _liveMessagesRef;
+    if (ref == null) return;
+    _liveChatSub = ref.orderBy('createdAt', descending: false).snapshots().listen(
+      (snap) {
+        comments
+          ..clear()
+          ..addAll(
+            snap.docs.map((d) {
+              final m = d.data();
+              final name = (m['senderName'] ?? m['sender'] ?? 'User').toString();
+              final text = (m['text'] ?? '').toString();
+              return {'user': name, 'msg': text};
+            }),
+          );
+        update();
+      },
+      onError: (_) {},
+    );
+  }
+
+  Future<void> _persistDraft() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (!isLive || currentLiveId == null || agoraUid == null) {
+        await prefs.remove(_prefsKey);
+        return;
+      }
+      final raw =
+          '${currentLiveId ?? ''}|$agoraAppId|${agoraChannel ?? ''}|${agoraToken ?? ''}|${agoraUid ?? ''}|${currentTitle ?? ''}';
+      await prefs.setString(_prefsKey, raw);
+    } catch (_) {}
+  }
+
+  Future<bool> ensurePermissions() async {
+    final cam = await Permission.camera.request();
+    final mic = await Permission.microphone.request();
+    final ok = cam.isGranted && mic.isGranted;
+    if (!ok) {
+      Get.snackbar(
+        'Permissions required',
+        'Camera and microphone permission are required to go live.',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
+    }
+    return ok;
   }
 
   Future<void> _releaseEngine() async {
@@ -52,7 +169,7 @@ class LiveController extends GetxController {
       await engine?.leaveChannel();
       await engine?.release();
     } catch (e) {
-      print('engine release error $e');
+      debugPrint('engine release error $e');
     }
     engine = null;
     isJoined = false;
@@ -70,9 +187,7 @@ class LiveController extends GetxController {
     }
 
     await _releaseEngine();
-    await [Permission.camera, Permission.microphone].request();
-    final mic = await Permission.microphone.status;
-    print('MIC STATUS => $mic');
+    if (!await ensurePermissions()) return;
 
     engine = createAgoraRtcEngine();
     await engine!.initialize(RtcEngineContext(appId: agoraAppId));
@@ -96,8 +211,8 @@ class LiveController extends GetxController {
           update();
         },
         onError: (err, msg) {
-          print('the error of agora is $err');
-          print('the msg of agora is $msg');
+          debugPrint('agora error => $err');
+          debugPrint('agora msg => $msg');
           Get.snackbar(
             'Agora Error',
             msg,
@@ -131,19 +246,23 @@ class LiveController extends GetxController {
         publishMicrophoneTrack: isHost,
       ),
     );
-    print('agora token/channel/uid => $agoraToken | $agoraChannel | $joinUid');
+    debugPrint(
+      'agora token/channel/uid => $agoraToken | $agoraChannel | $joinUid',
+    );
 
     update();
   }
 
   Future<void> startLive({String title = 'Live Astrology Session'}) async {
+    if (isLoading) return;
+    if (!await ensurePermissions()) return;
     isLoading = true;
     update();
     try {
       final res = await ApiService.post('/live-streams/start', {
         'title': title,
       });
-      print('live stream session $res');
+      debugPrint('live stream session $res');
 
       if (res['success'] != true) {
         throw Exception(res['message']?.toString() ?? 'Start live failed');
@@ -160,6 +279,7 @@ class LiveController extends GetxController {
       agoraChannel = d['agora_channel']?.toString();
       agoraToken = d['agora_token']?.toString();
       agoraUid = _parsePositiveInt(d['agora_uid']);
+      currentTitle = title;
 
       if (agoraUid == null) {
         throw Exception(
@@ -172,33 +292,41 @@ class LiveController extends GetxController {
       likeCount = 0;
       localUserJoined = false;
       isLoading = false;
-      print('data of response $d');
       update();
 
+      await _persistDraft();
+      _startLiveChat();
       await initAgora(true);
       isJoined = true;
       Get.to(() => const HostScreen());
     } catch (e, stack) {
-      print('ERROR => $e');
-      print('STACK => $stack');
+      debugPrint('ERROR => $e');
+      debugPrint('STACK => $stack');
       isLoading = false;
       isLive = false;
       currentLiveId = null;
       agoraUid = null;
       agoraToken = null;
       agoraChannel = null;
+      currentTitle = null;
+      _stopLiveChat();
+      await _persistDraft();
       update();
       Get.snackbar('Error', '$e');
     }
   }
 
   Future<void> endLive() async {
-    try {
-      if (currentLiveId != null) {
-        await ApiService.post('/live-streams/$currentLiveId/end', {});
-      }
-    } catch (_) {}
+    if (isLoading) return;
+    isLoading = true;
+    update();
+
+    final endId = currentLiveId;
+
+    // Make UI fast: stop locally first.
+    _stopLiveChat();
     await _releaseEngine();
+
     isJoined = false;
     isLive = false;
     viewerCount = 0;
@@ -207,11 +335,30 @@ class LiveController extends GetxController {
     agoraUid = null;
     agoraToken = null;
     agoraChannel = null;
+    currentTitle = null;
     localUserJoined = false;
     remoteUid = null;
     comments.clear();
+    isLoading = false;
+    await _persistDraft();
     update();
-    Get.back();
+
+    // Best-effort server end in background.
+    if (endId != null) {
+      unawaited(_endOnServer(endId));
+    }
+  }
+
+  Future<void> _endOnServer(int liveId) async {
+    try {
+      await ApiService.post('/live-streams/$liveId/end', {})
+          .timeout(const Duration(seconds: 6));
+    } catch (_) {
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString(_pendingEndKey, liveId.toString());
+      } catch (_) {}
+    }
   }
 
   void addLike() {
@@ -219,12 +366,23 @@ class LiveController extends GetxController {
     update();
   }
 
-  void sendComment(String username) {
+  Future<void> sendComment(String username) async {
     final text = commentCtrl.text.trim();
     if (text.isEmpty) return;
-    comments.insert(0, {'user': username, 'msg': text});
     commentCtrl.clear();
-    update();
+
+    final ref = _liveMessagesRef;
+    if (ref == null) return;
+
+    await ref.add({
+      'text': text,
+      'sender': 'astrologer',
+      'senderName': username,
+      'senderId': Get.isRegistered<AuthController>()
+          ? Get.find<AuthController>().user?.id
+          : null,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
   }
 
 }
