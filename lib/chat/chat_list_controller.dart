@@ -79,54 +79,115 @@
 //   }
 // }
 
+import 'dart:async';
+
+import 'package:astrosarthi_konnect_astrologer_app/authentication/auth_controller.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+
+import 'chat_session_filter.dart';
 
 class ChatListController extends GetxController {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   List<Map<String, dynamic>> sessions = [];
   bool isLoading = true;
+  StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _sessionsSub;
+  int? _listeningForAstroId;
+
+  int? get _astrologerId {
+    if (!Get.isRegistered<AuthController>()) return null;
+    return ChatSessionFilter.parseId(Get.find<AuthController>().user?.id);
+  }
 
   @override
   void onInit() {
     super.onInit();
-    listenToSessions();
+    ensureListening();
   }
 
-  void listenToSessions() {
-    _firestore
+  @override
+  void onClose() {
+    _sessionsSub?.cancel();
+    super.onClose();
+  }
+
+  /// Call after login/profile load so list binds to the correct astrologer.
+  void ensureListening() {
+    final astroId = _astrologerId;
+    if (astroId == null) {
+      sessions = [];
+      isLoading = true;
+      update();
+      return;
+    }
+    if (_listeningForAstroId == astroId && _sessionsSub != null) return;
+    _listeningForAstroId = astroId;
+    _sessionsSub?.cancel();
+    listenToSessions(astroId);
+  }
+
+  void listenToSessions(int astroId) {
+    isLoading = true;
+    update();
+
+    // Prefer server-side filter; only this astrologer's chats.
+    _sessionsSub = _firestore
+        .collection('chat_sessions')
+        .where('astrologerId', isEqualTo: astroId)
+        .orderBy('updatedAt', descending: true)
+        .snapshots()
+        .listen(
+          (snapshot) {
+            sessions = _mapSessions(snapshot.docs, astroId);
+            isLoading = false;
+            update();
+          },
+          onError: (e) {
+            debugPrint('Chat list query error: $e');
+            _listenAllAndFilterClientSide(astroId);
+          },
+        );
+  }
+
+  void _listenAllAndFilterClientSide(int astroId) {
+    _sessionsSub?.cancel();
+    _sessionsSub = _firestore
         .collection('chat_sessions')
         .orderBy('updatedAt', descending: true)
         .snapshots()
         .listen(
           (snapshot) {
-            sessions = snapshot.docs
-                .map((doc) {
-                  final data = doc.data();
-                  data['id'] = doc.id;
-                  return data;
-                })
-                // Defensive: if any "assistant" sessions accidentally land in
-                // `chat_sessions`, don't show them in Chat tab.
-                .where((s) {
-                  final t = (s['type'] ?? s['sessionType'] ?? '').toString().toLowerCase();
-                  final isAssistant = (s['isAssistant'] == true) || t == 'assistant';
-                  return !isAssistant;
-                })
-                .toList();
-
-            debugPrint(" Sessions: ${sessions.length}");
+            sessions = _mapSessions(snapshot.docs, astroId);
             isLoading = false;
             update();
           },
           onError: (e) {
-            debugPrint("Stream Error: $e");
+            debugPrint('Stream Error: $e');
             isLoading = false;
             update();
           },
         );
+  }
+
+  List<Map<String, dynamic>> _mapSessions(
+    List<QueryDocumentSnapshot<Map<String, dynamic>>> docs,
+    int astroId,
+  ) {
+    return docs
+        .map((doc) {
+          final data = doc.data();
+          data['id'] = doc.id;
+          return data;
+        })
+        .where((s) => !ChatSessionFilter.isAssistantSession(s))
+        .where((s) => ChatSessionFilter.belongsToAstrologer(
+              s,
+              astrologerId: astroId,
+              docId: s['id']?.toString(),
+            ))
+        .toList();
   }
 
   String formatTime(dynamic timestamp) {

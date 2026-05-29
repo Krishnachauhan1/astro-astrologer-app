@@ -1,3 +1,4 @@
+import 'package:astrosarthi_konnect_astrologer_app/authentication/auth_controller.dart';
 import 'package:astrosarthi_konnect_astrologer_app/chat/assistant_chat_list_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -9,12 +10,22 @@ class AssistantChatListScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GetBuilder<AssistantChatListController>(
-      init: AssistantChatListController(),
-      builder: (controller) {
-        if (controller.isLoading) {
+    return GetBuilder<AuthController>(
+      builder: (auth) {
+        if (auth.user?.id == null || auth.user!.id <= 0) {
           return const Center(child: CircularProgressIndicator());
         }
+
+        if (Get.isRegistered<AssistantChatListController>()) {
+          Get.find<AssistantChatListController>().ensureListening();
+        }
+
+        return GetBuilder<AssistantChatListController>(
+          init: AssistantChatListController(),
+          builder: (controller) {
+            if (controller.isLoading) {
+              return const Center(child: CircularProgressIndicator());
+            }
 
         if (controller.sessions.isEmpty) {
           return const Center(
@@ -114,6 +125,8 @@ class AssistantChatListScreen extends StatelessWidget {
                 Get.to(() => AssistantChatScreen(sessionId: id, readOnly: true));
               },
             );
+          },
+        );
           },
         );
       },

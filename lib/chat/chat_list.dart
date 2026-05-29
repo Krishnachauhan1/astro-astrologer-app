@@ -70,6 +70,7 @@
 //   }
 // }
 
+import 'package:astrosarthi_konnect_astrologer_app/authentication/auth_controller.dart';
 import 'package:astrosarthi_konnect_astrologer_app/chat/chat_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -114,13 +115,23 @@ class _ChatSessionsTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GetBuilder<ChatListController>(
-      init: ChatListController(),
-      tag: Get.arguments?['chatId'],
-      builder: (controller) {
-        if (controller.isLoading) {
+    return GetBuilder<AuthController>(
+      builder: (auth) {
+        if (auth.user?.id == null || auth.user!.id <= 0) {
           return const Center(child: CircularProgressIndicator());
         }
+
+        if (Get.isRegistered<ChatListController>()) {
+          Get.find<ChatListController>().ensureListening();
+        }
+
+        return GetBuilder<ChatListController>(
+          init: ChatListController(),
+          tag: Get.arguments?['chatId'],
+          builder: (controller) {
+            if (controller.isLoading) {
+              return const Center(child: CircularProgressIndicator());
+            }
 
         if (controller.sessions.isEmpty) {
           return const Center(
@@ -229,6 +240,8 @@ class _ChatSessionsTab extends StatelessWidget {
                 Get.to(() => const ChatScreen());
               },
             );
+          },
+        );
           },
         );
       },
