@@ -1,6 +1,9 @@
+import 'package:astrosarthi_konnect_astrologer_app/authentication/auth_controller.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+
+import 'chat_session_filter.dart';
 
 class ChatController extends GetxController {
   final TextEditingController msgController = TextEditingController();
@@ -8,8 +11,8 @@ class ChatController extends GetxController {
   List<Map<String, dynamic>> messages = [];
   late String chatId;
   late String userName;
-  late String currentUserId;
-  final String astrologerId = "astrologer_1";
+  int? customerUserId;
+  int? astrologerId;
   final String initialChatId;
   final String initialUserName;
   ChatController({required this.initialChatId, required this.initialUserName});
@@ -19,33 +22,36 @@ class ChatController extends GetxController {
     super.onInit();
     chatId = initialChatId;
     userName = initialUserName;
-    print(" onInit called");
-    print("chatId: $chatId");
-    print(" userName: $userName");
-    currentUserId = "astrologer_1";
+    astrologerId = _loggedInAstrologerId();
+    _loadSessionMeta();
     listenMessages();
-    if (userName.isEmpty || userName == 'User') {
-      fetchUserName();
-    }
   }
 
-  Future<void> fetchUserName() async {
-    try {
-      final doc = await _firestore
-          .collection('chat_sessions')
-          .doc(chatId)
-          .get();
+  int? _loggedInAstrologerId() {
+    if (!Get.isRegistered<AuthController>()) return null;
+    return ChatSessionFilter.parseId(Get.find<AuthController>().user?.id);
+  }
 
-      if (doc.exists) {
-        final fetchedName = doc.data()?['userName'] ?? '';
-        if (fetchedName.isNotEmpty && fetchedName != 'User') {
-          userName = fetchedName;
-          print(" Real userName fetched: $userName");
-          update();
-        }
+  Future<void> _loadSessionMeta() async {
+    try {
+      final doc = await _firestore.collection('chat_sessions').doc(chatId).get();
+      if (!doc.exists) return;
+      final data = doc.data() ?? {};
+
+      final fetchedName = (data['userName'] ?? '').toString();
+      if (fetchedName.isNotEmpty && fetchedName != 'User') {
+        userName = fetchedName;
       }
+
+      customerUserId = ChatSessionFilter.parseId(data['userId']);
+      final sessionAstroId =
+          ChatSessionFilter.parseId(data['astrologerId'] ?? data['astrologer_id']);
+      if (sessionAstroId != null) {
+        astrologerId = sessionAstroId;
+      }
+      update();
     } catch (e) {
-      print("fetchUserName error: $e");
+      debugPrint('loadSessionMeta error: $e');
     }
   }
 
@@ -97,9 +103,9 @@ class ChatController extends GetxController {
     /// SESSION CREATE / UPDATE
     batch.set(sessionRef, {
       'chatId': chatId,
-      'userId': currentUserId,
+      if (customerUserId != null) 'userId': customerUserId,
       'userName': userName,
-      'astrologerId': astrologerId,
+      if (astrologerId != null) 'astrologerId': astrologerId,
       'lastMessage': text,
       'updatedAt': FieldValue.serverTimestamp(),
       'status': 'active',

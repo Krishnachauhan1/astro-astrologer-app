@@ -1,6 +1,8 @@
 import 'package:astrosarthi_konnect_astrologer_app/app_theme.dart';
 import 'package:astrosarthi_konnect_astrologer_app/authentication/auth_controller.dart';
 import 'package:astrosarthi_konnect_astrologer_app/authentication/login_screen.dart';
+import 'package:astrosarthi_konnect_astrologer_app/chat/chat_list.dart';
+import 'package:astrosarthi_konnect_astrologer_app/chat/chat_screen.dart';
 import 'package:astrosarthi_konnect_astrologer_app/vastu/vastu_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -89,7 +91,11 @@ class ProfileScreen extends StatelessWidget {
                       ),
                     ]),
                     const SizedBox(height: 14),
-                    _menuItem(Icons.history_rounded, 'Chat History', () {}),
+                    _menuItem(
+                      Icons.history_rounded,
+                      'Chat History',
+                      () => Get.to(() => ChatList()),
+                    ),
                     _menuItem(
                       Icons.home_work_outlined,
                       'Vastu Requests',

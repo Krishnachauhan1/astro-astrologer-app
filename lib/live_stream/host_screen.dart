@@ -9,8 +9,6 @@ class HostScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ctrl = Get.find<LiveController>();
-
     return Scaffold(
       backgroundColor: Colors.black,
       body: GetBuilder<LiveController>(
@@ -212,9 +210,9 @@ class _TopBar extends StatelessWidget {
             ),
           ),
           TextButton(
-            onPressed: () {
+            onPressed: () async {
+              await ctrl.endLive();
               Get.back();
-              ctrl.endLive();
             },
             child: Text(
               'End Live',
