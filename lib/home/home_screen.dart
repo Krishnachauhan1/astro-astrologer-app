@@ -72,7 +72,7 @@ class HomeScreen extends StatelessWidget {
               'Astrosarthi konnect',
               style: TextStyle(
                 color: Colors.white,
-                fontWeight: FontWeight.bold,
+                // fontWeight: FontWeight.bold,
               ),
             ),
           ),

@@ -1,6 +1,9 @@
 import 'dart:async';
+
 import 'package:astrosarthi_konnect_astrologer_app/calling/audio_call_screen.dart';
+import 'package:astrosarthi_konnect_astrologer_app/utils/fcm_token_helper.dart';
 import 'package:astrosarthi_konnect_astrologer_app/calling/video_call_screen.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -69,72 +72,66 @@ class NotificationService {
   }
 
   Future<void> initialize() async {
-    // 🔐 Permission
-    await _firebaseMessaging.requestPermission();
-
-    // 📲 TOKEN
-    String? token = await _firebaseMessaging.getToken();
-    print("🔥 FCM TOKEN: $token");
+    final String? token = await resolveFcmToken();
+    debugPrint('🔥 FCM TOKEN: $token');
     if (token != null) {
       try {
         final res = await ApiService.post('/user/update-fcm-token', {
           "fcm_token": token,
         });
-        print("✅ FCM token updated: $res");
+        debugPrint('✅ FCM token updated: $res');
       } catch (e) {
-        print("❌ FCM update error: $e");
+        debugPrint('❌ FCM update error: $e');
       }
-
-      // 🔄 Token refresh (IMPORTANT)
-      FirebaseMessaging.instance.onTokenRefresh.listen((newToken) {
-        print("🔄 NEW TOKEN: $newToken");
-        // 👉 Backend API call karke save karo
-      });
-
-      // 🔔 Local notification init
-      const AndroidInitializationSettings androidInit =
-          AndroidInitializationSettings('@mipmap/ic_launcher');
-
-      const InitializationSettings settings = InitializationSettings(
-        android: androidInit,
-      );
-
-      await _localNotifications.initialize(settings);
-
-      // 📩 FOREGROUND MESSAGE
-      FirebaseMessaging.onMessage.listen((message) {
-
-        final data = _normalizeCallData(message.data);
-        if (_isCallMessage(data)) {
-          showIncomingCallPopup(data, data['callType'].toString());
-        }
-      });
-
-      FirebaseMessaging.onMessageOpenedApp.listen((message) {
-        final data = _normalizeCallData(message.data);
-        if (_isCallMessage(data)) {
-          _openCallScreen(data);
-        }
-      });
-
-      final initialMessage = await FirebaseMessaging.instance
-          .getInitialMessage();
-      if (initialMessage != null) {
-        final data = _normalizeCallData(initialMessage.data);
-        if (_isCallMessage(data)) {
-          Future.delayed(const Duration(seconds: 1), () {
-            _openCallScreen(data);
-          });
-        }
-      }
-
-      // ⚠️ iOS support
-      await _firebaseMessaging.setForegroundNotificationPresentationOptions(
-        alert: true,
-        badge: true,
-        sound: true,
-      );
     }
+
+    FirebaseMessaging.instance.onTokenRefresh.listen((newToken) async {
+      if (!ApiService.isLoggedIn) return;
+      try {
+        await ApiService.post('/user/update-fcm-token', {"fcm_token": newToken});
+      } catch (e) {
+        debugPrint('FCM refresh update error: $e');
+      }
+    });
+
+    const AndroidInitializationSettings androidInit =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
+
+    const InitializationSettings settings = InitializationSettings(
+      android: androidInit,
+    );
+
+    await _localNotifications.initialize(settings);
+
+    FirebaseMessaging.onMessage.listen((message) {
+      final data = _normalizeCallData(message.data);
+      if (_isCallMessage(data)) {
+        showIncomingCallPopup(data, data['callType'].toString());
+      }
+    });
+
+    FirebaseMessaging.onMessageOpenedApp.listen((message) {
+      final data = _normalizeCallData(message.data);
+      if (_isCallMessage(data)) {
+        _openCallScreen(data);
+      }
+    });
+
+    final initialMessage = await FirebaseMessaging.instance.getInitialMessage();
+    if (initialMessage != null) {
+      final data = _normalizeCallData(initialMessage.data);
+      if (_isCallMessage(data)) {
+        Future.delayed(const Duration(seconds: 1), () {
+          _openCallScreen(data);
+        });
+      }
+    }
+
+    await _firebaseMessaging.setForegroundNotificationPresentationOptions(
+      alert: true,
+      badge: true,
+      sound: true,
+    );
 
     // 🔔 SHOW LOCAL NOTIFICATION
     // ignore: unused_element

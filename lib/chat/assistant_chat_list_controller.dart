@@ -56,7 +56,7 @@ class AssistantChatListController extends GetxController {
         .snapshots()
         .listen(
       (snap) {
-        sessions = _mapSessions(snap.docs, astroId);
+        sessions = _sortSessions(_mapSessions(snap.docs, astroId));
         isLoading = false;
         update();
       },
@@ -71,11 +71,10 @@ class AssistantChatListController extends GetxController {
     _sessionsSub?.cancel();
     _sessionsSub = _firestore
         .collection('assistant_chat_sessions')
-        .orderBy('updatedAt', descending: true)
         .snapshots()
         .listen(
       (snap) {
-        sessions = _mapSessions(snap.docs, astroId);
+        sessions = _sortSessions(_mapSessions(snap.docs, astroId));
         isLoading = false;
         update();
       },
@@ -85,6 +84,20 @@ class AssistantChatListController extends GetxController {
         update();
       },
     );
+  }
+
+  int _updatedAtMillis(Map<String, dynamic> session) {
+    final updatedAt = session['updatedAt'];
+    if (updatedAt is Timestamp) return updatedAt.millisecondsSinceEpoch;
+    return 0;
+  }
+
+  List<Map<String, dynamic>> _sortSessions(List<Map<String, dynamic>> list) {
+    final sorted = List<Map<String, dynamic>>.from(list);
+    sorted.sort(
+      (a, b) => _updatedAtMillis(b).compareTo(_updatedAtMillis(a)),
+    );
+    return sorted;
   }
 
   List<Map<String, dynamic>> _mapSessions(
