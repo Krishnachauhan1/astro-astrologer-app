@@ -1,5 +1,6 @@
 import 'package:astrosarthi_konnect_astrologer_app/authentication/user_model.dart';
 import 'package:astrosarthi_konnect_astrologer_app/servicess/api_service.dart';
+import 'package:astrosarthi_konnect_astrologer_app/utils/fcm_token_helper.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
@@ -57,21 +58,16 @@ class AuthController extends GetxController {
 
   String? _lastSentToken;
   Future<void> updateFcmToken() async {
+    final token = await resolveFcmToken();
+    if (token == null || token == _lastSentToken) return;
     try {
-      String? token = await FirebaseMessaging.instance.getToken();
-      if (token == null) {
-        await Future.delayed(const Duration(seconds: 2));
-        token = await FirebaseMessaging.instance.getToken();
-      }
-      if (token != null && token != _lastSentToken) {
-        final res = await ApiService.post('/user/update-fcm-token', {
-          "fcm_token": token,
-        });
-        _lastSentToken = token;
-        print("FCM token updated: $res");
-      }
+      final res = await ApiService.post('/user/update-fcm-token', {
+        "fcm_token": token,
+      });
+      _lastSentToken = token;
+      debugPrint('FCM token updated: $res');
     } catch (e) {
-      print("FCM update error: $e");
+      debugPrint('FCM update error: $e');
     }
   }
 

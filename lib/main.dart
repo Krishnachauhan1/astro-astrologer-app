@@ -11,10 +11,17 @@ import 'package:astrosarthi_konnect_astrologer_app/servicess/api_service.dart';
 import 'package:astrosarthi_konnect_astrologer_app/vastu/vastu_controller.dart';
 import 'package:astrosarthi_konnect_astrologer_app/vastu/vastu_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'firebase_options.dart';
+
+Future<void> _requestMicrophonePermission() async {
+  final status = await Permission.microphone.status;
+  if (!status.isGranted) {
+    await Permission.microphone.request();
+  }
+}
 
 class NavController extends GetxController {
   int currentIndex = 0;
@@ -46,13 +53,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await ApiService.loadToken();
-
-  // Get.find<AgoraController>()._initiateCall(); // Call initiation moved here for testing
-  String? token = await FirebaseMessaging.instance.getToken();
-  print("🔥 FCM Token: $token");
-  // await printDeviceInfo();
-
-  print("🔥 FCM Token: $token");
+  await _requestMicrophonePermission();
   await NotificationService().initialize();
   runApp(const AstrologyApp());
 }

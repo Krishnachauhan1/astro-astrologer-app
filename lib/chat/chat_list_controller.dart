@@ -140,7 +140,7 @@ class ChatListController extends GetxController {
         .snapshots()
         .listen(
           (snapshot) {
-            sessions = _mapSessions(snapshot.docs, astroId);
+            sessions = _sortSessions(_mapSessions(snapshot.docs, astroId));
             isLoading = false;
             update();
           },
@@ -153,22 +153,32 @@ class ChatListController extends GetxController {
 
   void _listenAllAndFilterClientSide(int astroId) {
     _sessionsSub?.cancel();
-    _sessionsSub = _firestore
-        .collection('chat_sessions')
-        .orderBy('updatedAt', descending: true)
-        .snapshots()
-        .listen(
-          (snapshot) {
-            sessions = _mapSessions(snapshot.docs, astroId);
-            isLoading = false;
-            update();
-          },
-          onError: (e) {
-            debugPrint('Stream Error: $e');
-            isLoading = false;
-            update();
-          },
-        );
+    _sessionsSub = _firestore.collection('chat_sessions').snapshots().listen(
+      (snapshot) {
+        sessions = _sortSessions(_mapSessions(snapshot.docs, astroId));
+        isLoading = false;
+        update();
+      },
+      onError: (e) {
+        debugPrint('Stream Error: $e');
+        isLoading = false;
+        update();
+      },
+    );
+  }
+
+  int _updatedAtMillis(Map<String, dynamic> session) {
+    final updatedAt = session['updatedAt'];
+    if (updatedAt is Timestamp) return updatedAt.millisecondsSinceEpoch;
+    return 0;
+  }
+
+  List<Map<String, dynamic>> _sortSessions(List<Map<String, dynamic>> list) {
+    final sorted = List<Map<String, dynamic>>.from(list);
+    sorted.sort(
+      (a, b) => _updatedAtMillis(b).compareTo(_updatedAtMillis(a)),
+    );
+    return sorted;
   }
 
   List<Map<String, dynamic>> _mapSessions(
