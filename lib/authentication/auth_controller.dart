@@ -43,10 +43,15 @@ class AuthController extends GetxController {
     });
     isLoading = false;
     if (res['data'] != null && res['data']['token'] != null) {
-      await ApiService.saveToken(res['data']['token']);
       if (res['data']['user'] != null) {
         user = UserModel.fromJson(res['data']['user']);
       }
+      if (user != null && !user!.isAstrologer) {
+        isLoading = false;
+        update();
+        return false;
+      }
+      await ApiService.saveToken(res['data']['token']);
       isLoggedIn = true;
       update();
       await updateFcmToken();
@@ -108,7 +113,7 @@ class AuthController extends GetxController {
     update();
 
     try {
-      const endpoint = '/register';
+      final endpoint = isAstrologer ? '/register-astrologer' : '/register';
 
       final Map<String, dynamic> body = {
         'name': name,
@@ -142,14 +147,20 @@ class AuthController extends GetxController {
       final token = data is Map ? data['token'] : null;
 
       if (res['success'] == true && token != null) {
-        await ApiService.saveToken(token.toString());
-
         if (data is Map && data['user'] != null) {
           user = UserModel.fromJson(
             Map<String, dynamic>.from(data['user'] as Map),
           );
         }
 
+        if (isAstrologer && user != null && !user!.isAstrologer) {
+          lastRegisterError =
+              'Account created as user, not astrologer. Contact support.';
+          update();
+          return false;
+        }
+
+        await ApiService.saveToken(token.toString());
         isLoggedIn = true;
         update();
         await updateFcmToken();
