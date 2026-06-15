@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:astrosarthi_konnect_astrologer_app/calling/audio_call_screen.dart';
+import 'package:astrosarthi_konnect_astrologer_app/live_stream/live_controller.dart';
+import 'package:astrosarthi_konnect_astrologer_app/live_stream/live_host_chat_bridge.dart';
 import 'package:astrosarthi_konnect_astrologer_app/utils/fcm_token_helper.dart';
 import 'package:astrosarthi_konnect_astrologer_app/calling/video_call_screen.dart';
 import 'package:flutter/foundation.dart';
@@ -172,6 +174,8 @@ class NotificationService {
   }
 
   void _showChatRequestBanner(Map<String, dynamic> data) {
+    if (_routeChatToLiveHost(data)) return;
+
     Get.snackbar(
       'Chat request',
       data['caller_name']?.toString() ?? 'A user wants to chat',
@@ -189,6 +193,19 @@ class NotificationService {
         child: const Text('View', style: TextStyle(color: Colors.white)),
       ),
     );
+  }
+
+  bool _routeChatToLiveHost(Map<String, dynamic> data) {
+    if (!Get.isRegistered<LiveController>()) return false;
+    final live = Get.find<LiveController>();
+    if (!live.isHostingLive) return false;
+
+    if (LiveHostChatBridge.onIncomingChatWhileLive != null) {
+      LiveHostChatBridge.onIncomingChatWhileLive!(data);
+      return true;
+    }
+    live.setPendingChatRequest(data);
+    return true;
   }
 
   bool _isCallMessage(Map<String, dynamic> data) {
