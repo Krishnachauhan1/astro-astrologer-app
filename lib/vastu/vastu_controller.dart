@@ -5,7 +5,7 @@ import 'package:get/get.dart';
 class VastuController extends GetxController {
   bool isLoading = false;
   List<String> selectedProblems = [];
-  List vastuRequests=[];
+  List vastuRequests = [];
   final problems = [
     '💰 Arthik Tangi (Finance)',
     '😴 Neend ki Samasya',
@@ -14,10 +14,11 @@ class VastuController extends GetxController {
     '💔 Vaivahik Samasya',
     '📚 Shiksha mein Rukawat',
   ];
-  void loading(){
-    isLoading=!isLoading;
+  void loading() {
+    isLoading = !isLoading;
     update();
   }
+
   @override
   void onInit() {
     // TODO: implement onInit
@@ -25,8 +26,8 @@ class VastuController extends GetxController {
     loading();
     getVastuRequest();
     loading();
-
   }
+
   void toggleProblem(String p) {
     if (selectedProblems.contains(p)) {
       selectedProblems.remove(p);
@@ -39,9 +40,11 @@ class VastuController extends GetxController {
   Future<void> getVastuRequest() async {
     try {
       final res = await ApiService.get('/vastu');
+
       if (res['success'] == true && res['data'] is List) {
         vastuRequests = List.from(res['data'] as List);
       }
+      print("vasturequest :$vastuRequests");
     } catch (e) {
       debugPrint('getVastuRequest error: $e');
     } finally {
