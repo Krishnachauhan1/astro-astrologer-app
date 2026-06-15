@@ -8,9 +8,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:get/get_core/src/get_main.dart';
+import 'package:get/get_instance/src/extension_instance.dart';
 import 'package:get/get_navigation/src/extension_navigation.dart';
+import 'package:get/get_navigation/src/snackbar/snackbar.dart';
 
+import '../notification/astrologer_notification_controller.dart';
 import '../servicess/api_service.dart';
+import '../utils/call_session_api.dart';
+import '../utils/session_request_api.dart';
 
 class NotificationService {
   final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
@@ -30,12 +35,7 @@ class NotificationService {
       callType = 'audio';
     }
 
-    final callerName =
-        data['caller_name'] ??
-        data['callerName'] ??
-        data['astrologerName'] ??
-        data['title'] ??
-        'Unknown Caller';
+    final callerName = 'User';
 
     // Backend sends `caller_uid` (the customer's user id) for the astrologer
     // to know who is calling. The astrologer side joins Agora with its OWN
@@ -105,6 +105,12 @@ class NotificationService {
 
     FirebaseMessaging.onMessage.listen((message) {
       final data = _normalizeCallData(message.data);
+      _refreshNotificationList();
+      final type = (data['type'] ?? '').toString().toLowerCase();
+      if (type.contains('chat') && !type.contains('accepted')) {
+        _showChatRequestBanner(data);
+        return;
+      }
       if (_isCallMessage(data)) {
         showIncomingCallPopup(data, data['callType'].toString());
       }
@@ -159,6 +165,32 @@ class NotificationService {
     }
   }
 
+  void _refreshNotificationList() {
+    if (Get.isRegistered<AstrologerNotificationController>()) {
+      Get.find<AstrologerNotificationController>().fetchNotifications();
+    }
+  }
+
+  void _showChatRequestBanner(Map<String, dynamic> data) {
+    Get.snackbar(
+      'Chat request',
+      data['caller_name']?.toString() ?? 'A user wants to chat',
+      snackPosition: SnackPosition.TOP,
+      duration: const Duration(seconds: 4),
+      mainButton: TextButton(
+        onPressed: () async {
+          Get.closeCurrentSnackbar();
+          final sessionId = parseCallSessionId(data);
+          if (sessionId != null) {
+            await SessionRequestApi.acceptSession(sessionId, isChat: true);
+          }
+          await SessionRequestApi.openSessionFromNotification(data);
+        },
+        child: const Text('View', style: TextStyle(color: Colors.white)),
+      ),
+    );
+  }
+
   bool _isCallMessage(Map<String, dynamic> data) {
     final type = (data['type'] ?? '').toString();
     return type == 'incoming_call' ||
@@ -166,6 +198,24 @@ class NotificationService {
         type == 'video_call' ||
         type == 'incoming_video_call' ||
         (data['agora_app_id'] != null && data['channel'] != null);
+  }
+
+  Future<void> _acceptCall(Map<String, dynamic> data) async {
+    final sessionId = parseCallSessionId(data);
+    if (sessionId != null) {
+      await acceptCallSession(sessionId);
+    }
+    _openCallScreen(data);
+  }
+
+  Future<void> _rejectCall(Map<String, dynamic> data) async {
+    final sessionId = parseCallSessionId(data);
+    if (sessionId != null) {
+      await rejectCallSession(sessionId);
+    }
+    if (Get.isDialogOpen == true) {
+      Get.back();
+    }
   }
 
   void _openCallScreen(Map<String, dynamic> data) {
@@ -208,9 +258,7 @@ class NotificationService {
                 children: [
                   // ❌ Reject
                   GestureDetector(
-                    onTap: () {
-                      Get.back();
-                    },
+                    onTap: () => _rejectCall(data),
                     child: CircleAvatar(
                       backgroundColor: Colors.red,
                       radius: 30,
@@ -222,17 +270,7 @@ class NotificationService {
                   GestureDetector(
                     onTap: () {
                       Get.back();
-                      if (data['callType'] == 'video') {
-                        Get.to(
-                          () => const VideoCallScreen(),
-                          arguments: data,
-                        );
-                      } else {
-                        Get.to(
-                          () => const AudioCallScreen(),
-                          arguments: data,
-                        );
-                      }
+                      _acceptCall(data);
                     },
                     child: CircleAvatar(
                       backgroundColor: Colors.green,
@@ -348,9 +386,7 @@ class NotificationService {
                           icon: Icons.call_end,
                           color: Colors.red,
                           label: "Decline",
-                          onTap: () {
-                            Get.back();
-                          },
+                          onTap: () => _rejectCall(data),
                         ),
 
                         /// ACCEPT
@@ -360,11 +396,7 @@ class NotificationService {
                           label: "Accept",
                           onTap: () {
                             Get.back();
-
-                            Get.to(
-                              () => const VideoCallScreen(),
-                              arguments: data,
-                            );
+                            _acceptCall(data);
                           },
                         ),
                       ],
@@ -469,9 +501,7 @@ class NotificationService {
 
                         /// DECLINE
                         GestureDetector(
-                          onTap: () {
-                            Get.back();
-                          },
+                          onTap: () => _rejectCall(data),
 
                           child: Container(
                             padding: const EdgeInsets.all(12),
@@ -494,11 +524,7 @@ class NotificationService {
                         GestureDetector(
                           onTap: () {
                             Get.back();
-
-                            Get.to(
-                              () => const AudioCallScreen(),
-                              arguments: data,
-                            );
+                            _acceptCall(data);
                           },
 
                           child: Container(

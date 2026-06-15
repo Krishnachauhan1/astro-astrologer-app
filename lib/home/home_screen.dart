@@ -1,7 +1,11 @@
 import 'package:astrosarthi_konnect_astrologer_app/app_theme.dart';
 import 'package:astrosarthi_konnect_astrologer_app/authentication/auth_controller.dart';
+import 'package:astrosarthi_konnect_astrologer_app/home/astrologer_status_controller.dart';
 import 'package:astrosarthi_konnect_astrologer_app/main.dart';
+import 'package:astrosarthi_konnect_astrologer_app/utils/profile_photo_url.dart';
+import 'package:astrosarthi_konnect_astrologer_app/notification/astrologer_notification_screen.dart';
 import 'package:astrosarthi_konnect_astrologer_app/vastu/vastu_screen.dart';
+import 'package:astrosarthi_konnect_astrologer_app/widgets/profile_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -37,18 +41,38 @@ class HomeScreen extends StatelessWidget {
                         children: [
                           Row(
                             children: [
-                              const Icon(
-                                Icons.auto_awesome,
-                                color: AppColors.gold,
-                                size: 20,
+                              ProfileAvatar(
+                                photoUrl: resolveProfilePhotoUrl(
+                                  profilePhoto: auth.user?.profilePhoto,
+                                  profilePhotoUrl: auth.user?.profilePhotoUrl,
+                                ),
+                                name: auth.user?.name,
+                                size: 48,
+                                borderWidth: 2,
                               ),
-                              const SizedBox(width: 8),
-                              Text(
-                                'Namaste, ${auth.user?.name.split(' ').first ?? 'User'}!',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Namaste, ${auth.user?.name.split(' ').first ?? 'User'}!',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    if (auth.user?.name.isNotEmpty == true)
+                                      Text(
+                                        auth.user!.name,
+                                        style: TextStyle(
+                                          color: Colors.white.withOpacity(0.85),
+                                          fontSize: 12,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                  ],
                                 ),
                               ),
                             ],
@@ -75,6 +99,12 @@ class HomeScreen extends StatelessWidget {
                 // fontWeight: FontWeight.bold,
               ),
             ),
+            actions: [
+              IconButton(
+                onPressed: () => Get.to(() => const AstrologerNotificationScreen()),
+                icon: const Icon(Icons.notifications_outlined, color: Colors.white),
+              ),
+            ],
           ),
           SliverToBoxAdapter(
             child: Padding(
@@ -82,6 +112,55 @@ class HomeScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  GetBuilder<AstrologerStatusController>(
+                    builder: (statusCtrl) => Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(14),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Availability',
+                              style: TextStyle(fontWeight: FontWeight.w700),
+                            ),
+                            const SizedBox(height: 8),
+                            const Text(
+                              'Go online to receive chat, audio and video calls.',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Wrap(
+                              spacing: 8,
+                              children: [
+                                _statusChip(
+                                  'Online',
+                                  'online',
+                                  Colors.green,
+                                  statusCtrl,
+                                ),
+                                _statusChip(
+                                  'Busy',
+                                  'busy',
+                                  Colors.orange,
+                                  statusCtrl,
+                                ),
+                                _statusChip(
+                                  'Offline',
+                                  'offline',
+                                  Colors.grey,
+                                  statusCtrl,
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
                   // Quick Actions
                   _sectionTitle('Quick Consult'),
                   const SizedBox(height: 12),
@@ -129,6 +208,25 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
+  Widget _statusChip(
+    String label,
+    String value,
+    Color color,
+    AstrologerStatusController ctrl,
+  ) {
+    final selected = ctrl.status == value;
+    return ChoiceChip(
+      label: Text(label),
+      selected: selected,
+      onSelected: ctrl.isUpdating ? null : (_) => ctrl.setStatus(value),
+      selectedColor: color.withOpacity(0.2),
+      labelStyle: TextStyle(
+        color: selected ? color : AppColors.textSecondary,
+        fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+      ),
+    );
+  }
+
   Widget _sectionTitle(String t) => Text(
     t,
     style: const TextStyle(
@@ -146,8 +244,8 @@ class HomeScreen extends StatelessWidget {
   ) {
     void showIncomingOnlyInfo(String channel) {
       Get.snackbar(
-        '$channel Calls',
-        'Incoming $channel calls from users will ring on this screen automatically.',
+        '$channel',
+        'Stay online on home screen. Incoming $channel from users will ring here.',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: AppColors.primaryDark,
         colorText: Colors.white,

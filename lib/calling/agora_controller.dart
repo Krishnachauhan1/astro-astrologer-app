@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:agora_rtc_engine/agora_rtc_engine.dart';
 import 'package:astrosarthi_konnect_astrologer_app/authentication/auth_controller.dart';
-import 'package:astrosarthi_konnect_astrologer_app/servicess/api_service.dart';
+import 'package:astrosarthi_konnect_astrologer_app/utils/call_session_api.dart';
 import 'package:get/get.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -395,11 +395,7 @@ class AgoraController extends GetxController {
         print('engine release error: $e');
       }
       if (sessionId != null) {
-        try {
-          await ApiService.post('/call/$sessionId/end', {});
-        } catch (e) {
-          print('Call end API error: $e');
-        }
+        await endCallSession(sessionId);
       }
       try {
         if (Get.isRegistered<AgoraController>()) {

@@ -24,7 +24,7 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
     Get.put(
       AgoraController(
         isVideoCall: true,
-        astrologerName: args['astrologerName'] ?? args['caller_name'] ?? '',
+        astrologerName: 'User',
         callData: args,
       ),
     );

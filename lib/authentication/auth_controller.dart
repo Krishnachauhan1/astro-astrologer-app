@@ -183,7 +183,32 @@ class AuthController extends GetxController {
   Future<void> fetchProfile() async {
     final res = await ApiService.get('/profile');
     if (res['data'] != null) {
-      user = UserModel.fromJson(res['data']);
+      user = UserModel.fromJson(
+        Map<String, dynamic>.from(res['data'] as Map),
+      );
+      update();
+    }
+  }
+
+  Future<bool> updateProfilePhoto(String filePath) async {
+    isLoading = true;
+    update();
+    try {
+      final res = await ApiService.postMultipart(
+        '/profile',
+        filePath: filePath,
+        fileField: 'profile_photo',
+      );
+      if (res['data'] != null) {
+        user = UserModel.fromJson(
+          Map<String, dynamic>.from(res['data'] as Map),
+        );
+        update();
+        return true;
+      }
+      return false;
+    } finally {
+      isLoading = false;
       update();
     }
   }

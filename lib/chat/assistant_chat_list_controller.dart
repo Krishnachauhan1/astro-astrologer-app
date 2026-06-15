@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../utils/user_privacy.dart';
 import 'chat_session_filter.dart';
 
 class AssistantChatListController extends GetxController {
@@ -106,7 +107,7 @@ class AssistantChatListController extends GetxController {
   ) {
     return docs
         .map((d) {
-          final data = d.data();
+          final data = stripUserContactFields(d.data());
           data['id'] = d.id;
           return data;
         })

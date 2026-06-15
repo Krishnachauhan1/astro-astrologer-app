@@ -23,7 +23,7 @@ class _AudioCallScreenState extends State<AudioCallScreen> {
     Get.put(
       AgoraController(
         isVideoCall: false,
-        astrologerName: args['astrologerName'] ?? args['caller_name'] ?? '',
+        astrologerName: 'User',
         callData: args,
       ),
     );
