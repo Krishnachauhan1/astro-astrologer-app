@@ -399,7 +399,6 @@ class LiveController extends GetxController {
 
   void setHostScreenActive(bool active) {
     hostScreenActive = active;
-    update();
   }
 
   void setPendingChatRequest(Map<String, dynamic>? data) {
