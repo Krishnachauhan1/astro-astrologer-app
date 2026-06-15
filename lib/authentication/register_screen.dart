@@ -23,7 +23,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   bool obscure = true;
 
-  List<String> allSpecs = ['Vedic', 'Tarot', 'KP', 'Numerology'];
+  List<String> allSpecs = [
+    'Vedic',
+    'Vastu',
+    'Tarot',
+    'KP',
+    'Numerology',
+    'Palmistry',
+    'Face Reading',
+  ];
   List<String> selectedSpecs = [];
 
   @override

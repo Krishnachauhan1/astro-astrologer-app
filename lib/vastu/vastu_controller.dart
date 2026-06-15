@@ -38,7 +38,7 @@ class VastuController extends GetxController {
 
   Future<void> getVastuRequest() async {
     try {
-      final res = await ApiService.get('/vastu');
+      final res = await ApiService.get('/vastu/astrologer/requests');
       if (res['success'] == true && res['data'] is List) {
         vastuRequests = List.from(res['data'] as List);
       }

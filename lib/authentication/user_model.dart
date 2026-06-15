@@ -5,6 +5,7 @@ class UserModel {
   final String phone;
   final String role;
   final String? profilePhoto;
+  final String? profilePhotoUrl;
 
   UserModel({
     required this.id,
@@ -13,6 +14,7 @@ class UserModel {
     required this.phone,
     this.role = 'user',
     this.profilePhoto,
+    this.profilePhotoUrl,
   });
 
   bool get isAstrologer => role == 'astrologer';
@@ -23,6 +25,7 @@ class UserModel {
     email: json['email'] ?? '',
     phone: json['phone'] ?? '',
     role: json['role']?.toString() ?? 'user',
-    profilePhoto: json['profile_photo'],
+    profilePhoto: json['profile_photo']?.toString(),
+    profilePhotoUrl: json['profile_photo_url']?.toString(),
   );
 }

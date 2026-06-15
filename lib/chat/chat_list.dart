@@ -75,6 +75,7 @@ import 'package:astrosarthi_konnect_astrologer_app/chat/chat_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'assistant_chat_list_screen.dart';
+import '../utils/user_privacy.dart';
 import 'chat_list_controller.dart';
 import 'chat_screen.dart';
 
@@ -154,7 +155,7 @@ class _ChatSessionsTab extends StatelessWidget {
           separatorBuilder: (_, _) => const Divider(height: 1, indent: 72),
           itemBuilder: (context, index) {
             final session = controller.sessions[index];
-            final userName = session['userName'] ?? 'User';
+            final userName = displayUserLabel(session);
             final lastMessage = session['lastMessage'] ?? 'No message';
             final status = session['status'] ?? 'inactive';
             final updatedAt = session['updatedAt'];
@@ -234,7 +235,7 @@ class _ChatSessionsTab extends StatelessWidget {
                 Get.put(
                   ChatController(
                     initialChatId: session['id'] ?? 'demo_chat',
-                    initialUserName: session['userName'] ?? 'User',
+                    initialUserName: displayUserLabel(session),
                   ),
                 );
                 Get.to(() => const ChatScreen());

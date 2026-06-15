@@ -2,13 +2,30 @@ import 'package:astrosarthi_konnect_astrologer_app/app_theme.dart';
 import 'package:astrosarthi_konnect_astrologer_app/authentication/auth_controller.dart';
 import 'package:astrosarthi_konnect_astrologer_app/authentication/login_screen.dart';
 import 'package:astrosarthi_konnect_astrologer_app/chat/chat_list.dart';
-import 'package:astrosarthi_konnect_astrologer_app/chat/chat_screen.dart';
+import 'package:astrosarthi_konnect_astrologer_app/earnings/earnings_screen.dart';
+import 'package:astrosarthi_konnect_astrologer_app/utils/profile_photo_url.dart';
 import 'package:astrosarthi_konnect_astrologer_app/vastu/vastu_screen.dart';
+import 'package:astrosarthi_konnect_astrologer_app/widgets/profile_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
+
+  Future<void> _pickProfilePhoto(AuthController auth) async {
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 1200,
+      imageQuality: 85,
+    );
+    if (picked == null) return;
+    final ok = await auth.updateProfilePhoto(picked.path);
+    if (!ok) {
+      Get.snackbar('Profile', 'Photo upload failed');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,18 +50,37 @@ class ProfileScreen extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       const SizedBox(height: 90),
-                      CircleAvatar(
-                        radius: 44,
-                        backgroundColor: Colors.white.withOpacity(0.2),
-                        child: Text(
-                          auth.user?.name.isNotEmpty == true
-                              ? auth.user!.name[0].toUpperCase()
-                              : 'U',
-                          style: const TextStyle(
-                            fontSize: 36,
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
+                      GestureDetector(
+                        onTap: () => _pickProfilePhoto(auth),
+                        child: Stack(
+                          children: [
+                            ProfileAvatar(
+                              photoUrl: resolveProfilePhotoUrl(
+                                profilePhoto: auth.user?.profilePhoto,
+                                profilePhotoUrl: auth.user?.profilePhotoUrl,
+                              ),
+                              name: auth.user?.name,
+                              size: 88,
+                              borderWidth: 3,
+                              borderColor: Colors.white.withOpacity(0.7),
+                            ),
+                            Positioned(
+                              right: 0,
+                              bottom: 0,
+                              child: Container(
+                                padding: const EdgeInsets.all(6),
+                                decoration: const BoxDecoration(
+                                  color: AppColors.gold,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.camera_alt,
+                                  size: 16,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                       const SizedBox(height: 10),
@@ -91,6 +127,11 @@ class ProfileScreen extends StatelessWidget {
                       ),
                     ]),
                     const SizedBox(height: 14),
+                    _menuItem(
+                      Icons.account_balance_wallet_outlined,
+                      'My Earnings',
+                      () => Get.to(() => const EarningsScreen()),
+                    ),
                     _menuItem(
                       Icons.history_rounded,
                       'Chat History',

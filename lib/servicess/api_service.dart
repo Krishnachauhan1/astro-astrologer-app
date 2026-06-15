@@ -1,4 +1,5 @@
 import 'dart:convert';
+
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -58,5 +59,44 @@ class ApiService {
     } catch (e) {
       return {'error': e.toString()};
     }
+  }
+
+  static Future<Map<String, dynamic>> postMultipart(
+    String path, {
+    Map<String, String>? fields,
+    String? filePath,
+    String fileField = 'profile_photo',
+  }) async {
+    await loadToken();
+    final request = http.MultipartRequest('POST', Uri.parse('$baseUrl$path'));
+    request.headers.addAll({
+      'Accept': 'application/json',
+      if (_token != null && _token!.isNotEmpty)
+        'Authorization': 'Bearer $_token',
+    });
+    if (fields != null) request.fields.addAll(fields);
+    if (filePath != null && filePath.isNotEmpty) {
+      request.files.add(await http.MultipartFile.fromPath(fileField, filePath));
+    }
+    final streamed = await request.send();
+    final body = await streamed.stream.bytesToString();
+    try {
+      return jsonDecode(body) as Map<String, dynamic>;
+    } catch (_) {
+      return {'success': false, 'message': body};
+    }
+  }
+
+  /// Download binary file (e.g. vastu attachment) with auth token.
+  static Future<http.Response> download(String path) async {
+    await loadToken();
+    return http.get(
+      Uri.parse('$baseUrl$path'),
+      headers: {
+        'Accept': '*/*',
+        if (_token != null && _token!.isNotEmpty)
+          'Authorization': 'Bearer $_token',
+      },
+    );
   }
 }
