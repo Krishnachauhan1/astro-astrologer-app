@@ -1,6 +1,8 @@
 import 'package:agora_rtc_engine/agora_rtc_engine.dart';
 import 'package:astrosarthi_konnect_astrologer_app/authentication/auth_controller.dart';
 import 'package:astrosarthi_konnect_astrologer_app/live_stream/host_screen.dart';
+import 'package:astrosarthi_konnect_astrologer_app/utils/call_session_api.dart';
+import 'package:astrosarthi_konnect_astrologer_app/utils/session_request_api.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -38,6 +40,15 @@ class LiveController extends GetxController {
 
   final List<Map<String, String>> comments = [];
   final TextEditingController commentCtrl = TextEditingController();
+
+  bool hostScreenActive = false;
+  Map<String, dynamic>? pendingChatRequest;
+  String? activePrivateChatId;
+  String? activePrivateChatUserName;
+  bool privateChatPanelOpen = false;
+  bool privateChatMinimized = false;
+
+  bool get isHostingLive => isLive && hostScreenActive && engine != null;
 
   int? _parsePositiveInt(dynamic value) {
     if (value == null) return null;
@@ -339,6 +350,7 @@ class LiveController extends GetxController {
     localUserJoined = false;
     remoteUid = null;
     comments.clear();
+    clearPrivateChatState();
     isLoading = false;
     await _persistDraft();
     update();
@@ -383,6 +395,100 @@ class LiveController extends GetxController {
           : null,
       'createdAt': FieldValue.serverTimestamp(),
     });
+  }
+
+  void setHostScreenActive(bool active) {
+    hostScreenActive = active;
+    update();
+  }
+
+  void setPendingChatRequest(Map<String, dynamic>? data) {
+    pendingChatRequest = data;
+    update();
+  }
+
+  String? resolveFirebaseChatId(Map<String, dynamic> data) {
+    final fromPayload =
+        (data['firebase_chat_id'] ?? data['firebaseChatId'])?.toString().trim();
+    if (fromPayload != null && fromPayload.isNotEmpty) return fromPayload;
+
+    final userId = int.tryParse(
+      '${data['user_id'] ?? data['caller_uid'] ?? data['customer_id']}',
+    );
+    final astroId = Get.isRegistered<AuthController>()
+        ? Get.find<AuthController>().user?.id
+        : null;
+    if (userId == null ||
+        astroId == null ||
+        userId <= 0 ||
+        astroId <= 0) {
+      return null;
+    }
+    return userId < astroId ? '${userId}_$astroId' : '${astroId}_$userId';
+  }
+
+  void openPrivateChatFromPayload(Map<String, dynamic> data) {
+    final chatId = resolveFirebaseChatId(data);
+    if (chatId == null) return;
+
+    final userName = data['caller_name']?.toString() ??
+        data['user_name']?.toString() ??
+        'User';
+
+    activePrivateChatId = chatId;
+    activePrivateChatUserName = userName;
+    privateChatPanelOpen = true;
+    privateChatMinimized = false;
+    pendingChatRequest = null;
+    update();
+  }
+
+  Future<void> acceptPendingChat() async {
+    final data = pendingChatRequest;
+    if (data == null) return;
+
+    final sessionId = SessionRequestApi.parseSessionId(data) ??
+        parseCallSessionId(data);
+    if (sessionId != null) {
+      await acceptChatSession(sessionId);
+    }
+    openPrivateChatFromPayload(data);
+  }
+
+  Future<void> rejectPendingChat() async {
+    final data = pendingChatRequest;
+    if (data == null) return;
+
+    final sessionId = SessionRequestApi.parseSessionId(data) ??
+        parseCallSessionId(data);
+    if (sessionId != null) {
+      await rejectChatSession(sessionId);
+    }
+    pendingChatRequest = null;
+    update();
+  }
+
+  void minimizePrivateChat() {
+    privateChatMinimized = true;
+    update();
+  }
+
+  void restorePrivateChat() {
+    privateChatMinimized = false;
+    update();
+  }
+
+  void closePrivateChat() {
+    activePrivateChatId = null;
+    activePrivateChatUserName = null;
+    privateChatPanelOpen = false;
+    privateChatMinimized = false;
+    update();
+  }
+
+  void clearPrivateChatState() {
+    pendingChatRequest = null;
+    closePrivateChat();
   }
 
 }

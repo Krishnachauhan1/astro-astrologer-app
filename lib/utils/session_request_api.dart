@@ -2,6 +2,8 @@ import 'package:astrosarthi_konnect_astrologer_app/calling/audio_call_screen.dar
 import 'package:astrosarthi_konnect_astrologer_app/calling/video_call_screen.dart';
 import 'package:astrosarthi_konnect_astrologer_app/chat/chat_controller.dart';
 import 'package:astrosarthi_konnect_astrologer_app/chat/chat_screen.dart';
+import 'package:astrosarthi_konnect_astrologer_app/live_stream/live_controller.dart';
+import 'package:astrosarthi_konnect_astrologer_app/live_stream/live_host_chat_bridge.dart';
 import 'package:astrosarthi_konnect_astrologer_app/servicess/api_service.dart';
 import 'package:astrosarthi_konnect_astrologer_app/utils/call_session_api.dart';
 import 'package:get/get.dart';
@@ -116,14 +118,27 @@ class SessionRequestApi {
 
   static Future<void> openSessionFromNotification(Map<String, dynamic> item) async {
     if (isChatRequest(item)) {
+      final sessionId = parseSessionId(item) ?? parseCallSessionId(item);
+      if (sessionId != null) {
+        await acceptChatSession(sessionId);
+      }
+
+      if (LiveHostChatBridge.tryOpenOnLiveHost?.call(item) == true) {
+        return;
+      }
+
       final payload = _payload(item);
-      final userId = int.tryParse(
-        '${payload['user_id'] ?? payload['caller_uid'] ?? payload['customer_id']}',
-      );
+      final chatId = _resolveFirebaseChatId(payload, item);
       final userName =
-          payload['user_name']?.toString() ?? payload['caller_name']?.toString() ?? 'User';
-      final chatId = payload['firebase_chat_id']?.toString() ??
-          (userId != null ? 'chat_$userId' : 'chat');
+          payload['user_name']?.toString() ??
+          payload['caller_name']?.toString() ??
+          item['title']?.toString() ??
+          'User';
+
+      if (chatId == null) {
+        Get.snackbar('Chat', 'Could not open this chat session.');
+        return;
+      }
 
       Get.put(
         ChatController(
@@ -141,5 +156,24 @@ class SessionRequestApi {
     } else {
       await Get.to(() => const AudioCallScreen(), arguments: data);
     }
+  }
+
+  static String? _resolveFirebaseChatId(
+    Map<String, dynamic> payload,
+    Map<String, dynamic> item,
+  ) {
+    if (Get.isRegistered<LiveController>()) {
+      return Get.find<LiveController>().resolveFirebaseChatId({
+        ...item,
+        ...payload,
+      });
+    }
+
+    final fromPayload =
+        (payload['firebase_chat_id'] ?? item['firebase_chat_id'])
+            ?.toString()
+            .trim();
+    if (fromPayload != null && fromPayload.isNotEmpty) return fromPayload;
+    return null;
   }
 }
