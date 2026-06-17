@@ -4,6 +4,7 @@ import 'package:astrosarthi_konnect_astrologer_app/live_stream/live_controller.d
 import 'package:astrosarthi_konnect_astrologer_app/chat/chat_controller.dart';
 import 'package:astrosarthi_konnect_astrologer_app/live_stream/live_host_chat_bridge.dart';
 import 'package:astrosarthi_konnect_astrologer_app/live_stream/host_video_pip_overlay.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -165,6 +166,13 @@ class _HostScreenState extends State<HostScreen> {
               if (ctrl.activeVideoCallData != null &&
                   ctrl.videoCallPanelOpen)
                 HostVideoPipOverlay(
+                  key: ValueKey(
+                    (ctrl.activeVideoCallData!['agora_channel'] ??
+                            ctrl.activeVideoCallData!['channel'] ??
+                            ctrl.activeVideoCallData!['session_id'] ??
+                            '')
+                        .toString(),
+                  ),
                   callData: ctrl.activeVideoCallData!,
                   onClose: ctrl.closeVideoCall,
                 ),
@@ -201,9 +209,16 @@ class _LocalVideo extends StatelessWidget {
     return AgoraVideoView(
       controller: VideoViewController(
         rtcEngine: ctrl.engine!,
-        canvas: const VideoCanvas(uid: 0),
+        canvas: const VideoCanvas(
+          uid: 0,
+          renderMode: RenderModeType.renderModeHidden,
+        ),
+        useAndroidSurfaceView:
+            !kIsWeb && defaultTargetPlatform == TargetPlatform.android,
+        useFlutterTexture:
+            !kIsWeb && defaultTargetPlatform == TargetPlatform.iOS,
       ),
-      );
+    );
   }
 }
 

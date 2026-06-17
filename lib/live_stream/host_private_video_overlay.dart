@@ -122,14 +122,17 @@ class _HostPrivateVideoOverlayState extends State<HostPrivateVideoOverlay> {
             return Stack(
               fit: StackFit.expand,
               children: [
-                if (ctrl.remoteJoined &&
+                if (ctrl.remoteVideoReady &&
                     ctrl.engine != null &&
-                    ctrl.remoteUid != null &&
-                    ctrl.remoteUid! > 0)
+                    ctrl.remoteVideoUid != null &&
+                    ctrl.remoteVideoUid! > 0)
                   AgoraVideoView(
                     controller: VideoViewController.remote(
                       rtcEngine: ctrl.engine!,
-                      canvas: VideoCanvas(uid: ctrl.remoteUid),
+                      canvas: VideoCanvas(
+                        uid: ctrl.remoteVideoUid!,
+                        renderMode: RenderModeType.renderModeHidden,
+                      ),
                       connection: RtcConnection(channelId: ctrl.channelName),
                       useAndroidSurfaceView: !kIsWeb &&
                           defaultTargetPlatform == TargetPlatform.android,

@@ -1,11 +1,11 @@
 import 'package:agora_rtc_engine/agora_rtc_engine.dart';
 import 'package:astrosarthi_konnect_astrologer_app/app_theme.dart';
-import 'package:astrosarthi_konnect_astrologer_app/calling/agora_controller.dart';
 import 'package:astrosarthi_konnect_astrologer_app/live_stream/live_controller.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+/// User video PiP during live. Uses [joinChannelEx] on the live engine.
 class HostVideoPipOverlay extends StatefulWidget {
   final Map<String, dynamic> callData;
   final VoidCallback onClose;
@@ -21,58 +21,39 @@ class HostVideoPipOverlay extends StatefulWidget {
 }
 
 class _HostVideoPipOverlayState extends State<HostVideoPipOverlay> {
-  late final String _tag;
-  bool _liveSuspended = false;
+  bool _started = false;
 
   @override
   void initState() {
     super.initState();
-    final sessionId =
-        int.tryParse('${widget.callData['session_id'] ?? widget.callData['sessionId']}') ??
-            0;
-    _tag = 'host_pip_$sessionId';
-    _start();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _start();
+    });
   }
 
   Future<void> _start() async {
-    if (Get.isRegistered<LiveController>()) {
-      await Get.find<LiveController>().suspendLiveForOverlaySession();
-    }
-    _liveSuspended = true;
+    if (_started) return;
+    _started = true;
 
-    final name = widget.callData['caller_name']?.toString() ?? 'User';
-    Get.put(
-      AgoraController(
-        callData: widget.callData,
-        isVideoCall: true,
-        astrologerName: name,
-        embeddedOnLive: true,
-        onEmbeddedEnded: _handleEnded,
-      ),
-      tag: _tag,
-      );
-    if (mounted) setState(() {});
-  }
+    if (!Get.isRegistered<LiveController>()) return;
 
-  Future<void> _handleEnded() async {
-    if (_liveSuspended && Get.isRegistered<LiveController>()) {
-      await Get.find<LiveController>().resumeLiveAfterOverlaySession();
+    final lc = Get.find<LiveController>();
+
+    for (var i = 0; i < 40 && !lc.localUserJoined; i++) {
+      await Future.delayed(const Duration(milliseconds: 250));
+      if (!mounted) return;
     }
-    widget.onClose();
+
+    await lc.joinCallOverlay(
+      callData: widget.callData,
+      onEnded: widget.onClose,
+    );
   }
 
   Future<void> _endCall() async {
-    if (Get.isRegistered<AgoraController>(tag: _tag)) {
-      await Get.find<AgoraController>(tag: _tag).endCall();
+    if (Get.isRegistered<LiveController>()) {
+      await Get.find<LiveController>().leaveCallOverlay(endOnServer: true);
     }
-  }
-
-  @override
-  void dispose() {
-    if (Get.isRegistered<AgoraController>(tag: _tag)) {
-      Get.delete<AgoraController>(tag: _tag, force: true);
-    }
-    super.dispose();
   }
 
   @override
@@ -82,8 +63,8 @@ class _HostVideoPipOverlayState extends State<HostVideoPipOverlay> {
     return Positioned(
       top: top,
       right: 12,
-      width: 118,
-      height: 168,
+      width: 140,
+      height: 200,
       child: Material(
         elevation: 8,
         borderRadius: BorderRadius.circular(14),
@@ -91,45 +72,77 @@ class _HostVideoPipOverlayState extends State<HostVideoPipOverlay> {
         color: Colors.black,
         child: _buildBody(),
       ),
-      );
+    );
   }
 
   Widget _buildBody() {
-    if (!Get.isRegistered<AgoraController>(tag: _tag)) {
+    if (!Get.isRegistered<LiveController>()) {
       return const Center(
         child: CircularProgressIndicator(color: AppColors.gold),
       );
     }
 
-    return GetBuilder<AgoraController>(
-      tag: _tag,
-      builder: (ctrl) {
-        if (ctrl.isLoading) {
+    return GetBuilder<LiveController>(
+      builder: (lc) {
+        if (lc.callJoining) {
           return const Center(
             child: CircularProgressIndicator(color: AppColors.gold),
-      );
+          );
         }
+
+        if (lc.callJoinError.isNotEmpty) {
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(8),
+              child: Text(
+                lc.callJoinError,
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.8),
+                  fontSize: 10,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          );
+        }
+
+        final remoteUid = lc.callRemoteUid ?? lc.expectedCallRemoteUid;
+        final callConn = lc.callRtcConnection;
+        final showRemote = lc.engine != null &&
+            lc.callJoined &&
+            callConn != null &&
+            remoteUid != null &&
+            remoteUid > 0 &&
+            (lc.callRemoteJoined || lc.callRemoteVideoReady);
+
         return Stack(
           fit: StackFit.expand,
           children: [
-            if (ctrl.remoteJoined &&
-                ctrl.engine != null &&
-                ctrl.remoteUid != null &&
-                ctrl.remoteUid! > 0)
+            if (showRemote)
               AgoraVideoView(
+                key: ValueKey('host_pip_${callConn.channelId}_$remoteUid'),
                 controller: VideoViewController.remote(
-                  rtcEngine: ctrl.engine!,
-                  canvas: VideoCanvas(uid: ctrl.remoteUid),
-                  connection: RtcConnection(channelId: ctrl.channelName),
-                  useAndroidSurfaceView: !kIsWeb &&
-                      defaultTargetPlatform == TargetPlatform.android,
-                  useFlutterTexture: !kIsWeb &&
-                      defaultTargetPlatform == TargetPlatform.iOS,
+                  rtcEngine: lc.engine!,
+                  canvas: VideoCanvas(
+                    uid: remoteUid,
+                    renderMode: RenderModeType.renderModeHidden,
+                  ),
+                  connection: callConn,
+                  useAndroidSurfaceView:
+                      !kIsWeb && defaultTargetPlatform == TargetPlatform.android,
+                  useFlutterTexture:
+                      !kIsWeb && defaultTargetPlatform == TargetPlatform.iOS,
                 ),
               )
             else
-              const Center(
-                child: Icon(Icons.videocam, color: Colors.white38),
+              Center(
+                child: Text(
+                  lc.callJoined ? 'Waiting for video…' : 'Connecting…',
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.7),
+                    fontSize: 11,
+                  ),
+                ),
               ),
             Positioned(
               left: 0,
@@ -144,11 +157,14 @@ class _HostVideoPipOverlayState extends State<HostVideoPipOverlay> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      ctrl.formattedTime,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 10,
+                    Flexible(
+                      child: Text(
+                        lc.callFormattedTime,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     GestureDetector(
@@ -164,8 +180,8 @@ class _HostVideoPipOverlayState extends State<HostVideoPipOverlay> {
               ),
             ),
           ],
-      );
+        );
       },
-      );
+    );
   }
 }

@@ -20,6 +20,7 @@ class AgoraController extends GetxController {
 
   int? remoteUid;
   bool remoteJoined = false;
+  bool remoteVideoReady = false;
 
   String? _agoraAppId;
   String? _agoraChannel;
@@ -34,10 +35,12 @@ class AgoraController extends GetxController {
 
   int _seconds = 0;
   Timer? _timer;
+  Timer? _offlineGraceTimer;
   bool _callEnded = false;
 
   String get rateText => _ratePerMin != null ? '₹$_ratePerMin/min' : '';
   String get channelName => _agoraChannel ?? '';
+  int? get remoteVideoUid => remoteUid ?? _expectedRemoteUid;
 
   final Map<String, dynamic> callData;
 
@@ -180,8 +183,13 @@ class AgoraController extends GetxController {
 
       if (isVideoCall) {
         await engine!.enableVideo();
-        await engine!.enableLocalVideo(true);
-        await engine!.startPreview();
+        if (embeddedOnLive) {
+          // Receive user's camera only — live host already uses the camera.
+          await engine!.enableLocalVideo(false);
+        } else {
+          await engine!.enableLocalVideo(true);
+          await engine!.startPreview();
+        }
       } else {
         await engine!.disableVideo();
       }
@@ -205,8 +213,9 @@ class AgoraController extends GetxController {
             isLoading = false;
             try {
               engine?.muteAllRemoteAudioStreams(false);
+              engine?.muteAllRemoteVideoStreams(false);
             } catch (e) {
-              print('muteAllRemoteAudioStreams error: $e');
+              print('muteAllRemoteStreams error: $e');
             }
             try {
               engine?.setEnableSpeakerphone(isSpeakerOn);
@@ -225,23 +234,38 @@ class AgoraController extends GetxController {
           },
           onUserJoined: (connection, uid, elapsed) {
             print("USER REMOTE JOINED => $uid elapsed=$elapsed");
-            remoteUid = uid;
-            remoteJoined = true;
-            _startTimer();
+            _offlineGraceTimer?.cancel();
+            if (uid > 0 && uid != _joinUid) {
+              remoteUid = uid;
+              remoteJoined = true;
+              _startTimer();
+            }
             try {
               engine?.muteRemoteAudioStream(uid: uid, mute: false);
+              engine?.muteRemoteVideoStream(uid: uid, mute: false);
             } catch (e) {
-              print('muteRemoteAudioStream error: $e');
+              print('unmute remote error: $e');
             }
             update();
           },
           onUserOffline: (connection, uid, reason) {
             print("REMOTE USER OFFLINE => $uid reason=$reason");
+            if (uid != remoteUid && uid != _expectedRemoteUid) return;
             remoteUid = null;
             remoteJoined = false;
+            remoteVideoReady = false;
             _timer?.cancel();
             update();
-            endCall();
+            if (embeddedOnLive) {
+              _offlineGraceTimer?.cancel();
+              _offlineGraceTimer = Timer(const Duration(seconds: 8), () {
+                if (!_callEnded && !remoteJoined) {
+                  endCall();
+                }
+              });
+            } else {
+              endCall();
+            }
           },
           onConnectionStateChanged: (connection, state, reason) {
             print("CONNECTION STATE => $state reason=$reason");
@@ -274,7 +298,32 @@ class AgoraController extends GetxController {
           onRemoteVideoStateChanged:
               (connection, remoteUid, state, reason, elapsed) {
                 print("REMOTE VIDEO STATE => uid=$remoteUid state=$state");
+                if (remoteUid <= 0 || remoteUid == _joinUid) return;
+                if (state == RemoteVideoState.remoteVideoStateStarting ||
+                    state == RemoteVideoState.remoteVideoStateDecoding) {
+                  this.remoteUid = remoteUid;
+                  remoteJoined = true;
+                  remoteVideoReady = true;
+                  update();
+                } else if (state ==
+                        RemoteVideoState.remoteVideoStateStopped ||
+                    state == RemoteVideoState.remoteVideoStateFailed) {
+                  if (this.remoteUid == remoteUid) {
+                    remoteVideoReady = false;
+                    update();
+                  }
+                }
               },
+          onFirstRemoteVideoFrame:
+              (connection, remoteUid, width, height, elapsed) {
+            print("FIRST REMOTE VIDEO => uid=$remoteUid");
+            if (remoteUid > 0 && remoteUid != _joinUid) {
+              this.remoteUid = remoteUid;
+              remoteJoined = true;
+              remoteVideoReady = true;
+              update();
+            }
+          },
           onError: (err, msg) {
             print("AGORA ERROR => code=$err msg=$msg");
             // Non-fatal errors during the call should not blow up the UI.
@@ -314,7 +363,7 @@ class AgoraController extends GetxController {
         options: ChannelMediaOptions(
           channelProfile: ChannelProfileType.channelProfileCommunication,
           publishMicrophoneTrack: true,
-          publishCameraTrack: isVideoCall,
+          publishCameraTrack: isVideoCall && !embeddedOnLive,
           autoSubscribeAudio: true,
           autoSubscribeVideo: isVideoCall,
         ),
@@ -376,6 +425,8 @@ class AgoraController extends GetxController {
 
     _timer?.cancel();
     _timer = null;
+    _offlineGraceTimer?.cancel();
+    _offlineGraceTimer = null;
 
     final sessionId = _callSessionId;
     final localEngine = engine;
@@ -403,15 +454,28 @@ class AgoraController extends GetxController {
       if (sessionId != null) {
         await endCallSession(sessionId);
       }
-      if (embeddedOnLive) {
-        onEmbeddedEnded?.call();
-      }
+      final deleteTag = _tagForDelete();
       try {
-        if (!embeddedOnLive && Get.isRegistered<AgoraController>()) {
+        if (Get.isRegistered<AgoraController>(tag: deleteTag)) {
+          Get.delete<AgoraController>(tag: deleteTag, force: true);
+        } else if (!embeddedOnLive && Get.isRegistered<AgoraController>()) {
           Get.delete<AgoraController>(force: true);
         }
       } catch (_) {}
+      if (embeddedOnLive) {
+        onEmbeddedEnded?.call();
+      }
     });
+  }
+
+  String _tagForDelete() {
+    final channel =
+        (_agoraChannel ?? callData['agora_channel'] ?? callData['channel'] ?? '')
+            .toString()
+            .trim();
+    if (channel.isNotEmpty) return 'host_pip_$channel';
+    final sessionId = callData['session_id'] ?? callData['sessionId'] ?? '0';
+    return 'host_pip_$sessionId';
   }
 
   @override

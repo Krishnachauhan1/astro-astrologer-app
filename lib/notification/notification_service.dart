@@ -238,15 +238,26 @@ class NotificationService {
   }
 
   Future<void> _acceptCall(Map<String, dynamic> data) async {
+    var merged = Map<String, dynamic>.from(data);
     final sessionId = parseCallSessionId(data);
     if (sessionId != null) {
-      await acceptCallSession(sessionId);
+      try {
+        final res = await ApiService.post('/$sessionId/accept', {});
+        if (res['success'] == true && res['data'] is Map) {
+          merged = {
+            ...merged,
+            ...Map<String, dynamic>.from(res['data'] as Map),
+          };
+        }
+      } catch (_) {
+        await acceptCallSession(sessionId);
+      }
     }
-    if (LiveHostChatBridge.tryOpenVideoOnLiveHost?.call(data) == true) {
+    if (LiveHostChatBridge.tryOpenVideoOnLiveHost?.call(merged) == true) {
       if (Get.isDialogOpen == true) Get.back();
       return;
     }
-    _openCallScreen(data);
+    _openCallScreen(merged);
   }
 
   Future<void> _rejectCall(Map<String, dynamic> data) async {
