@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:astrosarthi_konnect_astrologer_app/utils/app_snackbar.dart';
 
 import 'package:astrosarthi_konnect_astrologer_app/calling/audio_call_screen.dart';
 import 'package:astrosarthi_konnect_astrologer_app/live_stream/live_controller.dart';
@@ -101,7 +102,7 @@ class NotificationService {
 
     const InitializationSettings settings = InitializationSettings(
       android: androidInit,
-    );
+      );
 
     await _localNotifications.initialize(settings);
 
@@ -114,6 +115,7 @@ class NotificationService {
         return;
       }
       if (_isCallMessage(data)) {
+        if (_routeVideoToLiveHost(data)) return;
         showIncomingCallPopup(data, data['callType'].toString());
       }
     });
@@ -139,7 +141,7 @@ class NotificationService {
       alert: true,
       badge: true,
       sound: true,
-    );
+      );
 
     // 🔔 SHOW LOCAL NOTIFICATION
     // ignore: unused_element
@@ -152,7 +154,7 @@ class NotificationService {
             importance: Importance.max,
             priority: Priority.high,
             playSound: true,
-          );
+      );
 
       const NotificationDetails details = NotificationDetails(
         android: androidDetails,
@@ -176,7 +178,7 @@ class NotificationService {
   void _showChatRequestBanner(Map<String, dynamic> data) {
     if (_routeChatToLiveHost(data)) return;
 
-    Get.snackbar(
+    AppSnackbar.show(
       'Chat request',
       data['caller_name']?.toString() ?? 'A user wants to chat',
       snackPosition: SnackPosition.TOP,
@@ -192,7 +194,7 @@ class NotificationService {
         },
         child: const Text('View', style: TextStyle(color: Colors.white)),
       ),
-    );
+      );
   }
 
   bool _routeChatToLiveHost(Map<String, dynamic> data) {
@@ -217,10 +219,32 @@ class NotificationService {
         (data['agora_app_id'] != null && data['channel'] != null);
   }
 
+  bool _routeVideoToLiveHost(Map<String, dynamic> data) {
+    final callType = (data['callType'] ?? data['call_type'] ?? '')
+        .toString()
+        .toLowerCase();
+    if (!callType.contains('video')) return false;
+
+    if (!Get.isRegistered<LiveController>()) return false;
+    final live = Get.find<LiveController>();
+    if (!live.isHostingLive) return false;
+
+    if (LiveHostChatBridge.onIncomingVideoWhileLive != null) {
+      LiveHostChatBridge.onIncomingVideoWhileLive!(data);
+      return true;
+    }
+    live.setPendingVideoCallRequest(data);
+    return true;
+  }
+
   Future<void> _acceptCall(Map<String, dynamic> data) async {
     final sessionId = parseCallSessionId(data);
     if (sessionId != null) {
       await acceptCallSession(sessionId);
+    }
+    if (LiveHostChatBridge.tryOpenVideoOnLiveHost?.call(data) == true) {
+      if (Get.isDialogOpen == true) Get.back();
+      return;
     }
     _openCallScreen(data);
   }
@@ -236,6 +260,10 @@ class NotificationService {
   }
 
   void _openCallScreen(Map<String, dynamic> data) {
+    if (data['callType'] == 'video' &&
+        LiveHostChatBridge.tryOpenVideoOnLiveHost?.call(data) == true) {
+      return;
+    }
     if (data['callType'] == 'video') {
       Get.to(() => const VideoCallScreen(), arguments: data);
     } else {
@@ -246,9 +274,7 @@ class NotificationService {
   void showIncomingCallUI(Map<String, dynamic> data) {
     Get.dialog(
       Dialog(
-        insetPadding: EdgeInsets.zero,
-        backgroundColor: Colors.black,
-        child: Container(
+        insetPadding: EdgeInsets.zero,        child: Container(
           width: double.infinity,
           height: double.infinity,
           padding: EdgeInsets.all(20),
@@ -276,9 +302,7 @@ class NotificationService {
                   // ❌ Reject
                   GestureDetector(
                     onTap: () => _rejectCall(data),
-                    child: CircleAvatar(
-                      backgroundColor: Colors.red,
-                      radius: 30,
+                    child: CircleAvatar(                      radius: 30,
                       child: Icon(Icons.call_end, color: Colors.white),
                     ),
                   ),
@@ -289,9 +313,7 @@ class NotificationService {
                       Get.back();
                       _acceptCall(data);
                     },
-                    child: CircleAvatar(
-                      backgroundColor: Colors.green,
-                      radius: 30,
+                    child: CircleAvatar(                      radius: 30,
                       child: Icon(Icons.call, color: Colors.white),
                     ),
                   ),
@@ -302,7 +324,7 @@ class NotificationService {
         ),
       ),
       barrierDismissible: false,
-    );
+      );
   }
 
   void showIncomingCallPopup(Map<String, dynamic> data, String callType) {
@@ -320,8 +342,6 @@ class NotificationService {
           canPop: false,
 
           child: Scaffold(
-            backgroundColor: Colors.black.withOpacity(0.92),
-
             body: SafeArea(
               child: Container(
                 width: double.infinity,
@@ -560,7 +580,7 @@ class NotificationService {
                   ),
                 ),
               ),
-            );
+      );
           },
 
           transitionBuilder: (_, animation, __, child) {
@@ -574,9 +594,9 @@ class NotificationService {
                   ),
 
               child: FadeTransition(opacity: animation, child: child),
-            );
+      );
           },
-        );
+      );
       });
     }
   }
@@ -623,6 +643,6 @@ class NotificationService {
           style: const TextStyle(color: Colors.white70, fontSize: 15),
         ),
       ],
-    );
+      );
   }
 }

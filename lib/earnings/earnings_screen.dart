@@ -105,9 +105,9 @@ class EarningsScreen extends StatelessWidget {
                     ],
                   ),
                 ),
-        );
+      );
       },
-    );
+      );
   }
 
   Widget _infoCard(String text) {
@@ -118,7 +118,7 @@ class EarningsScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
       ),
       child: Text(text, style: const TextStyle(fontSize: 12, height: 1.4)),
-    );
+      );
   }
 
   Widget _statCard(String label, String value, String sub) {
@@ -146,7 +146,7 @@ class EarningsScreen extends StatelessWidget {
           Text(sub, style: const TextStyle(color: Colors.white70, fontSize: 11)),
         ],
       ),
-    );
+      );
   }
 
   Widget _breakdownCard(String title, Map<String, dynamic> data, EarningsController ctrl) {
@@ -166,7 +166,7 @@ class EarningsScreen extends StatelessWidget {
           ],
         ),
       ),
-    );
+      );
   }
 
   Widget _row(String label, String value) {
@@ -179,6 +179,6 @@ class EarningsScreen extends StatelessWidget {
           Text(value, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
         ],
       ),
-    );
+      );
   }
 }

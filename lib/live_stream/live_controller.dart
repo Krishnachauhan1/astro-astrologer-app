@@ -9,8 +9,10 @@ import 'package:get/get.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:astrosarthi_konnect_astrologer_app/utils/app_snackbar.dart';
 
 import '../servicess/api_service.dart';
+import '../chat/chat_controller.dart';
 
 class LiveController extends GetxController {
   static const _prefsKey = 'live_draft_session_v1';
@@ -47,6 +49,12 @@ class LiveController extends GetxController {
   String? activePrivateChatUserName;
   bool privateChatPanelOpen = false;
   bool privateChatMinimized = false;
+
+  Map<String, dynamic>? pendingVideoCallRequest;
+  Map<String, dynamic>? activeVideoCallData;
+  bool videoCallPanelOpen = false;
+  bool videoCallMinimized = false;
+  bool _liveSuspendedForOverlay = false;
 
   bool get isHostingLive => isLive && hostScreenActive && engine != null;
 
@@ -139,11 +147,11 @@ class LiveController extends GetxController {
               final text = (m['text'] ?? '').toString();
               return {'user': name, 'msg': text};
             }),
-          );
+      );
         update();
       },
       onError: (_) {},
-    );
+      );
   }
 
   Future<void> _persistDraft() async {
@@ -164,11 +172,9 @@ class LiveController extends GetxController {
     final mic = await Permission.microphone.request();
     final ok = cam.isGranted && mic.isGranted;
     if (!ok) {
-      Get.snackbar(
+      AppSnackbar.show(
         'Permissions required',
         'Camera and microphone permission are required to go live.',
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
       );
     }
     return ok;
@@ -188,11 +194,9 @@ class LiveController extends GetxController {
 
   Future<void> initAgora(bool isHost) async {
     if (isHost && agoraUid == null) {
-      Get.snackbar(
+      AppSnackbar.show(
         'Live',
         'agora_uid missing — update backend or API response.',
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
       );
       return;
     }
@@ -201,7 +205,12 @@ class LiveController extends GetxController {
     if (!await ensurePermissions()) return;
 
     engine = createAgoraRtcEngine();
-    await engine!.initialize(RtcEngineContext(appId: agoraAppId));
+    await engine!.initialize(
+      RtcEngineContext(
+        appId: agoraAppId,
+        channelProfile: ChannelProfileType.channelProfileLiveBroadcasting,
+      ),
+      );
     await engine!.enableVideo();
     await engine!.enableAudio();
 
@@ -224,21 +233,19 @@ class LiveController extends GetxController {
         onError: (err, msg) {
           debugPrint('agora error => $err');
           debugPrint('agora msg => $msg');
-          Get.snackbar(
+          AppSnackbar.show(
             'Agora Error',
             msg,
-            backgroundColor: Colors.red,
-            colorText: Colors.white,
-          );
+      );
         },
       ),
-    );
+      );
 
     await engine!.setClientRole(
       role: isHost
           ? ClientRoleType.clientRoleBroadcaster
           : ClientRoleType.clientRoleAudience,
-    );
+      );
 
     if (isHost) await engine!.startPreview();
 
@@ -256,10 +263,10 @@ class LiveController extends GetxController {
         publishCameraTrack: isHost,
         publishMicrophoneTrack: isHost,
       ),
-    );
+      );
     debugPrint(
       'agora token/channel/uid => $agoraToken | $agoraChannel | $joinUid',
-    );
+      );
 
     update();
   }
@@ -295,7 +302,7 @@ class LiveController extends GetxController {
       if (agoraUid == null) {
         throw Exception(
           'agora_uid missing from API — deploy Laravel LiveController that returns agora_uid.',
-        );
+      );
       }
 
       isLive = true;
@@ -323,12 +330,13 @@ class LiveController extends GetxController {
       _stopLiveChat();
       await _persistDraft();
       update();
-      Get.snackbar('Error', '$e');
+      AppSnackbar.show('Error', '$e');
     }
   }
 
-  Future<void> endLive() async {
+  Future<void> endLive({bool leaveHostScreen = true}) async {
     if (isLoading) return;
+    final wasOnHost = hostScreenActive;
     isLoading = true;
     update();
 
@@ -351,6 +359,8 @@ class LiveController extends GetxController {
     remoteUid = null;
     comments.clear();
     clearPrivateChatState();
+    clearVideoCallState();
+    _liveSuspendedForOverlay = false;
     isLoading = false;
     await _persistDraft();
     update();
@@ -358,6 +368,22 @@ class LiveController extends GetxController {
     // Best-effort server end in background.
     if (endId != null) {
       unawaited(_endOnServer(endId));
+    }
+
+    if (leaveHostScreen && wasOnHost) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _leaveHostScreen();
+      });
+    }
+  }
+
+  void _leaveHostScreen() {
+    setHostScreenActive(false);
+    while (Get.isDialogOpen == true) {
+      Get.back();
+    }
+    if (Get.key.currentState?.canPop() ?? false) {
+      Get.back();
     }
   }
 
@@ -381,6 +407,18 @@ class LiveController extends GetxController {
   Future<void> sendComment(String username) async {
     final text = commentCtrl.text.trim();
     if (text.isEmpty) return;
+
+    if (privateChatPanelOpen && activePrivateChatId != null) {
+      final tag = 'host_private_$activePrivateChatId';
+      if (Get.isRegistered<ChatController>(tag: tag)) {
+        commentCtrl.clear();
+        final chatCtrl = Get.find<ChatController>(tag: tag);
+        chatCtrl.msgController.text = text;
+        await chatCtrl.sendMessage();
+        return;
+      }
+    }
+
     commentCtrl.clear();
 
     final ref = _liveMessagesRef;
@@ -413,7 +451,7 @@ class LiveController extends GetxController {
 
     final userId = int.tryParse(
       '${data['user_id'] ?? data['caller_uid'] ?? data['customer_id']}',
-    );
+      );
     final astroId = Get.isRegistered<AuthController>()
         ? Get.find<AuthController>().user?.id
         : null;
@@ -424,6 +462,20 @@ class LiveController extends GetxController {
       return null;
     }
     return userId < astroId ? '${userId}_$astroId' : '${astroId}_$userId';
+  }
+
+  void ensureHostPrivateChatController() {
+    final chatId = activePrivateChatId;
+    if (chatId == null) return;
+    final tag = 'host_private_$chatId';
+    if (Get.isRegistered<ChatController>(tag: tag)) return;
+    Get.put(
+      ChatController(
+        initialChatId: chatId,
+        initialUserName: activePrivateChatUserName ?? 'User',
+      ),
+      tag: tag,
+      );
   }
 
   void openPrivateChatFromPayload(Map<String, dynamic> data) {
@@ -439,6 +491,7 @@ class LiveController extends GetxController {
     privateChatPanelOpen = true;
     privateChatMinimized = false;
     pendingChatRequest = null;
+    ensureHostPrivateChatController();
     update();
   }
 
@@ -478,6 +531,13 @@ class LiveController extends GetxController {
   }
 
   void closePrivateChat() {
+    final chatId = activePrivateChatId;
+    if (chatId != null) {
+      final tag = 'host_private_$chatId';
+      if (Get.isRegistered<ChatController>(tag: tag)) {
+        Get.delete<ChatController>(tag: tag, force: true);
+      }
+    }
     activePrivateChatId = null;
     activePrivateChatUserName = null;
     privateChatPanelOpen = false;
@@ -488,6 +548,102 @@ class LiveController extends GetxController {
   void clearPrivateChatState() {
     pendingChatRequest = null;
     closePrivateChat();
+  }
+
+  bool _isVideoCallPayload(Map<String, dynamic> data) {
+    final type = (data['type'] ?? '').toString().toLowerCase();
+    final callType =
+        (data['callType'] ?? data['call_type'] ?? '').toString().toLowerCase();
+    return callType.contains('video') ||
+        type.contains('video') ||
+        type == 'incoming_video_call';
+  }
+
+  void setPendingVideoCallRequest(Map<String, dynamic>? data) {
+    pendingVideoCallRequest = data;
+    update();
+  }
+
+  void openVideoCallFromPayload(Map<String, dynamic> data) {
+    if (!_isVideoCallPayload(data)) return;
+
+    activeVideoCallData = Map<String, dynamic>.from(data);
+    videoCallPanelOpen = true;
+    videoCallMinimized = false;
+    pendingVideoCallRequest = null;
+    update();
+  }
+
+  Future<void> acceptPendingVideoCall() async {
+    final data = pendingVideoCallRequest;
+    if (data == null) return;
+
+    final sessionId = SessionRequestApi.parseSessionId(data) ??
+        parseCallSessionId(data);
+    if (sessionId != null) {
+      await acceptCallSession(sessionId);
+    }
+    openVideoCallFromPayload(data);
+  }
+
+  Future<void> rejectPendingVideoCall() async {
+    final data = pendingVideoCallRequest;
+    if (data == null) return;
+
+    final sessionId = SessionRequestApi.parseSessionId(data) ??
+        parseCallSessionId(data);
+    if (sessionId != null) {
+      await rejectCallSession(sessionId);
+    }
+    pendingVideoCallRequest = null;
+    update();
+  }
+
+  void minimizeVideoCall() {
+    videoCallMinimized = true;
+    update();
+  }
+
+  void restoreVideoCall() {
+    videoCallMinimized = false;
+    update();
+  }
+
+  void closeVideoCall() {
+    activeVideoCallData = null;
+    videoCallPanelOpen = false;
+    videoCallMinimized = false;
+    update();
+  }
+
+  void clearVideoCallState() {
+    pendingVideoCallRequest = null;
+    closeVideoCall();
+  }
+
+  Future<void> suspendLiveForOverlaySession() async {
+    if (_liveSuspendedForOverlay) return;
+    _liveSuspendedForOverlay = true;
+    try {
+      await engine?.stopPreview();
+      await engine?.leaveChannel();
+      await engine?.release();
+    } catch (_) {}
+    engine = null;
+    localUserJoined = false;
+    update();
+  }
+
+  Future<void> resumeLiveAfterOverlaySession() async {
+    if (!_liveSuspendedForOverlay) return;
+    _liveSuspendedForOverlay = false;
+    if (agoraChannel != null &&
+        agoraToken != null &&
+        agoraUid != null &&
+        agoraAppId.isNotEmpty) {
+      await initAgora(true);
+    }
+    update();
   }
 
 }

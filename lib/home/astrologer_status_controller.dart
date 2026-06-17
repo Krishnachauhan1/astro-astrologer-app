@@ -1,5 +1,6 @@
 import 'package:astrosarthi_konnect_astrologer_app/servicess/api_service.dart';
 import 'package:get/get.dart';
+import 'package:astrosarthi_konnect_astrologer_app/utils/app_snackbar.dart';
 
 class AstrologerStatusController extends GetxController {
   String status = 'offline';
@@ -13,10 +14,10 @@ class AstrologerStatusController extends GetxController {
       final res = await ApiService.post('/astrologer/status', {'status': next});
       if (res['success'] == true) {
         status = next;
-        Get.snackbar('Status', 'You are now $next');
+        AppSnackbar.show('Status', 'You are now $next');
       }
     } catch (e) {
-      Get.snackbar('Status', 'Could not update status');
+      AppSnackbar.show('Status', 'Could not update status');
     } finally {
       isUpdating = false;
       update();

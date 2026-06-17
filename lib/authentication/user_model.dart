@@ -27,5 +27,5 @@ class UserModel {
     role: json['role']?.toString() ?? 'user',
     profilePhoto: json['profile_photo']?.toString(),
     profilePhotoUrl: json['profile_photo_url']?.toString(),
-  );
+      );
 }

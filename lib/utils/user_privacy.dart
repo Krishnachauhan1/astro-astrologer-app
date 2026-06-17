@@ -14,7 +14,7 @@ Map<String, dynamic> stripUserContactFields(Map<String, dynamic> data) {
   if (copy['user'] is Map) {
     copy['user'] = stripUserContactFields(
       Map<String, dynamic>.from(copy['user'] as Map),
-    );
+      );
   }
   return copy;
 }

@@ -7,6 +7,7 @@ import 'package:astrosarthi_konnect_astrologer_app/live_stream/live_host_chat_br
 import 'package:astrosarthi_konnect_astrologer_app/servicess/api_service.dart';
 import 'package:astrosarthi_konnect_astrologer_app/utils/call_session_api.dart';
 import 'package:get/get.dart';
+import 'app_snackbar.dart';
 
 class SessionRequestApi {
   static List<Map<String, dynamic>> parseNotificationList(
@@ -66,7 +67,7 @@ class SessionRequestApi {
               item['id'] ??
               '')
           .toString(),
-    );
+      );
   }
 
   static Future<bool> acceptSession(
@@ -123,7 +124,7 @@ class SessionRequestApi {
         await acceptChatSession(sessionId);
       }
 
-      if (LiveHostChatBridge.tryOpenOnLiveHost?.call(item) == true) {
+      if (LiveHostChatBridge.tryOpenChatOnLiveHost?.call(item) == true) {
         return;
       }
 
@@ -136,7 +137,7 @@ class SessionRequestApi {
           'User';
 
       if (chatId == null) {
-        Get.snackbar('Chat', 'Could not open this chat session.');
+        AppSnackbar.show('Chat', 'Could not open this chat session.');
         return;
       }
 
@@ -151,6 +152,16 @@ class SessionRequestApi {
     }
 
     final data = normalizeCallData(item);
+    final sessionId = parseSessionId(item) ?? parseCallSessionId(item);
+    if (sessionId != null) {
+      await acceptCallSession(sessionId);
+    }
+
+    if (data['callType'] == 'video' &&
+        LiveHostChatBridge.tryOpenVideoOnLiveHost?.call(data) == true) {
+      return;
+    }
+
     if (data['callType'] == 'video') {
       await Get.to(() => const VideoCallScreen(), arguments: data);
     } else {

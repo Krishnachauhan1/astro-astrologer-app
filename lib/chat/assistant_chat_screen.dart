@@ -86,7 +86,7 @@ class AssistantChatScreen extends StatelessWidget {
                                     alignment: Alignment.centerLeft,
                                     child: _TypingBubble(),
                                   ),
-                                );
+      );
                               }
                               return _MessageBubble(list[i]);
                             },
@@ -107,9 +107,9 @@ class AssistantChatScreen extends StatelessWidget {
                 ),
             ],
           ),
-        );
+      );
       },
-    );
+      );
   }
 }
 
@@ -191,7 +191,7 @@ class _QuotaBar extends StatelessWidget {
             ),
         ],
       ),
-    );
+      );
   }
 }
 
@@ -261,7 +261,7 @@ class _InputBar extends StatelessWidget {
           ),
         ],
       ),
-    );
+      );
   }
 }
 
@@ -317,7 +317,7 @@ class _MessageBubble extends StatelessWidget {
           ],
         ),
       ),
-    );
+      );
   }
 
   String _formatTime(dynamic ts) {
@@ -355,7 +355,7 @@ class _TypingBubble extends StatelessWidget {
           _dot(),
         ],
       ),
-    );
+      );
   }
 
   Widget _dot() => Container(
@@ -458,7 +458,7 @@ class _AssistantReplyBarState extends State<_AssistantReplyBar> {
           ),
         ],
       ),
-    );
+      );
   }
 }
 
@@ -507,7 +507,7 @@ class _EmptyState extends StatelessWidget {
           ],
         ),
       ),
-    );
+      );
   }
 }
 

@@ -4,6 +4,7 @@ import 'package:astrosarthi_konnect_astrologer_app/authentication/register_scree
 import 'package:astrosarthi_konnect_astrologer_app/main.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:astrosarthi_konnect_astrologer_app/utils/app_snackbar.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -58,7 +59,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 16),
                 const Text(
-                  'Astrosarthi konnect',
+                  'Astrosarathi Konnect',
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 28,
@@ -208,7 +209,7 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         ),
       ),
-    );
+      );
   }
 
   Widget _buildField(
@@ -240,7 +241,7 @@ class _LoginScreenState extends State<LoginScreen> {
           horizontal: 16,
         ),
       ),
-    );
+      );
   }
 
   Future<void> _submit(AuthController auth) async {
@@ -253,11 +254,9 @@ class _LoginScreenState extends State<LoginScreen> {
     if (success) {
       Get.offAll(() => const MainShell());
     } else {
-      Get.snackbar(
+      AppSnackbar.show(
         'Error',
         'Invalid credentials. Please try again.',
-        backgroundColor: AppColors.busy,
-        colorText: Colors.white,
       );
     }
   }

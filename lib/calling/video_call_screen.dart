@@ -27,7 +27,7 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
         astrologerName: 'User',
         callData: args,
       ),
-    );
+      );
   }
 
   @override
@@ -69,7 +69,7 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
                   ],
                 ),
               ),
-            );
+      );
           }
           if (ctrl.errorMessage.isNotEmpty) {
             return Container(
@@ -109,7 +109,7 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
                   ),
                 ),
               ),
-            );
+      );
           }
           return Stack(
             children: [
@@ -373,10 +373,10 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
                 ),
               ),
             ],
-          );
+      );
         },
       ),
-    );
+      );
   }
 }
 
@@ -404,7 +404,7 @@ class _AstrologerAvatar extends StatelessWidget {
               )
             : _initials(name),
       ),
-    );
+      );
   }
 
   Widget _initials(String name) {
@@ -420,7 +420,7 @@ class _AstrologerAvatar extends StatelessWidget {
           fontWeight: FontWeight.w800,
         ),
       ),
-    );
+      );
   }
 }
 
@@ -470,6 +470,6 @@ class _CallControl extends StatelessWidget {
           ),
         ],
       ),
-    );
+      );
   }
 }

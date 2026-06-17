@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+import 'package:astrosarthi_konnect_astrologer_app/utils/app_snackbar.dart';
 
 import 'package:astrosarthi_konnect_astrologer_app/servicess/api_service.dart';
 import 'package:flutter/material.dart';
@@ -21,7 +22,7 @@ Future<void> openVastuAttachment(
         fileName: fileName ?? 'Home map',
       ),
     ),
-  );
+      );
 }
 
 class VastuAttachmentLoaderScreen extends StatefulWidget {
@@ -116,7 +117,7 @@ class _VastuAttachmentLoaderScreenState
         title: Text(widget.fileName, overflow: TextOverflow.ellipsis),
       ),
       body: _buildBody(),
-    );
+      );
   }
 
   Widget _buildBody() {
@@ -160,7 +161,7 @@ class _VastuAttachmentLoaderScreenState
         maxScale: 4,
         child: Image.memory(bytes, fit: BoxFit.contain),
       ),
-    );
+      );
   }
 }
 
@@ -194,14 +195,14 @@ class _VastuPdfMemoryViewerState extends State<VastuPdfMemoryViewer> {
       setState(() {
         _controller = PdfControllerPinch(
           document: PdfDocument.openData(widget.bytes),
-        );
+      );
       });
     } catch (e) {
       if (!mounted) return;
       setState(() {
         _error = e.toString();
       });
-      Get.snackbar('PDF', 'PDF open nahi ho paya');
+      AppSnackbar.show('PDF', 'PDF open nahi ho paya');
     }
   }
 

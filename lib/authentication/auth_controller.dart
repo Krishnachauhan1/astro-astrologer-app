@@ -150,7 +150,7 @@ class AuthController extends GetxController {
         if (data is Map && data['user'] != null) {
           user = UserModel.fromJson(
             Map<String, dynamic>.from(data['user'] as Map),
-          );
+      );
         }
 
         if (isAstrologer && user != null && !user!.isAstrologer) {
@@ -202,7 +202,7 @@ class AuthController extends GetxController {
       if (res['data'] != null) {
         user = UserModel.fromJson(
           Map<String, dynamic>.from(res['data'] as Map),
-        );
+      );
         update();
         return true;
       }

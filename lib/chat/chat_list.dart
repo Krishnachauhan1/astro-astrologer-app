@@ -92,7 +92,7 @@ class ChatList extends StatelessWidget {
           children: [_ChatSessionsTab(), AssistantChatListScreen()],
         ),
       ),
-    );
+      );
   }
 
   AppBar _buildAppBar() {
@@ -107,7 +107,7 @@ class ChatList extends StatelessWidget {
           Tab(text: 'Assistant Chat'),
         ],
       ),
-    );
+      );
   }
 }
 
@@ -147,7 +147,7 @@ class _ChatSessionsTab extends StatelessWidget {
                 ),
               ],
             ),
-          );
+      );
         }
 
         return ListView.separated(
@@ -237,16 +237,16 @@ class _ChatSessionsTab extends StatelessWidget {
                     initialChatId: session['id'] ?? 'demo_chat',
                     initialUserName: displayUserLabel(session),
                   ),
-                );
+      );
                 Get.to(() => const ChatScreen());
               },
-            );
+      );
           },
-        );
+      );
           },
-        );
+      );
       },
-    );
+      );
   }
 
   Color _getAvatarColor(String name) {

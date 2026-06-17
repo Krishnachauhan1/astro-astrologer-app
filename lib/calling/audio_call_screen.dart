@@ -26,7 +26,7 @@ class _AudioCallScreenState extends State<AudioCallScreen> {
         astrologerName: 'User',
         callData: args,
       ),
-    );
+      );
     print("ARGS ====== $args");
   }
 
@@ -70,7 +70,7 @@ class _AudioCallScreenState extends State<AudioCallScreen> {
                   ],
                 ),
               ),
-            );
+      );
           }
           if (ctrl.errorMessage.isNotEmpty) {
             print("ERROR MESSAGE ====== ${ctrl.errorMessage}");
@@ -115,7 +115,7 @@ class _AudioCallScreenState extends State<AudioCallScreen> {
                   ),
                 ),
               ),
-            );
+      );
           }
           return Container(
             width: double.infinity,
@@ -300,10 +300,10 @@ class _AudioCallScreenState extends State<AudioCallScreen> {
                 ],
               ),
             ),
-          );
+      );
         },
       ),
-    );
+      );
   }
 }
 
@@ -334,7 +334,7 @@ class _AstrologerAvatar extends StatelessWidget {
               )
             : _initials(),
       ),
-    );
+      );
   }
 
   Widget _initials() {
@@ -350,7 +350,7 @@ class _AstrologerAvatar extends StatelessWidget {
           fontWeight: FontWeight.w800,
         ),
       ),
-    );
+      );
   }
 }
 
@@ -399,6 +399,6 @@ class _AudioControl extends StatelessWidget {
           ),
         ],
       ),
-    );
+      );
   }
 }

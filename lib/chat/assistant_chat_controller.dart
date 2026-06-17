@@ -191,7 +191,7 @@ class AssistantChatController extends GetxController {
         ],
       ),
       barrierDismissible: true,
-    );
+      );
   }
 
   String _makeReply(String prompt) {

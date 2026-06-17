@@ -110,11 +110,11 @@ class AstrologerNotificationScreen extends StatelessWidget {
                               ],
                             ),
                           ),
-                        );
+      );
                       },
                     ),
                   ),
       ),
-    );
+      );
   }
 }

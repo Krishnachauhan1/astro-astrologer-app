@@ -58,9 +58,9 @@ class ChatScreen extends StatelessWidget {
               ),
             ],
           ),
-        );
+      );
       },
-    );
+      );
   }
 }
 
@@ -130,7 +130,7 @@ class _InputBar extends StatelessWidget {
           ),
         ],
       ),
-    );
+      );
   }
 }
 
@@ -167,6 +167,6 @@ class _MessageBubble extends StatelessWidget {
           ),
         ),
       ),
-    );
+      );
   }
 }

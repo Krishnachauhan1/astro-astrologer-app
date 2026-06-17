@@ -4,7 +4,7 @@ int? parseCallSessionId(Map<String, dynamic> data) {
   return int.tryParse(
     (data['session_id'] ?? data['sessionId'] ?? data['callSessionId'] ?? '')
         .toString(),
-  );
+      );
 }
 
 Future<bool> acceptCallSession(int sessionId) async {

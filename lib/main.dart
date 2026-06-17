@@ -65,7 +65,7 @@ class AstrologyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GetMaterialApp(
-      title: 'Astrosarthi Konnect',
+      title: 'Astrosarathi Konnect',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       initialBinding: BindingsBuilder(() {
@@ -81,7 +81,7 @@ class AstrologyApp extends StatelessWidget {
         builder: (auth) =>
             auth.isLoggedIn ? const MainShell() : const LoginScreen(),
       ),
-    );
+      );
   }
 }
 
@@ -131,6 +131,6 @@ class MainShell extends StatelessWidget {
           ],
         ),
       ),
-    );
+      );
   }
 }

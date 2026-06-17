@@ -1,8 +1,9 @@
 import 'package:agora_rtc_engine/agora_rtc_engine.dart';
 import 'package:astrosarthi_konnect_astrologer_app/app_theme.dart';
 import 'package:astrosarthi_konnect_astrologer_app/live_stream/live_controller.dart';
+import 'package:astrosarthi_konnect_astrologer_app/chat/chat_controller.dart';
 import 'package:astrosarthi_konnect_astrologer_app/live_stream/live_host_chat_bridge.dart';
-import 'package:astrosarthi_konnect_astrologer_app/live_stream/host_private_chat_overlay.dart';
+import 'package:astrosarthi_konnect_astrologer_app/live_stream/host_video_pip_overlay.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -20,17 +21,25 @@ class _HostScreenState extends State<HostScreen> {
     if (Get.isRegistered<LiveController>()) {
       Get.find<LiveController>().setHostScreenActive(true);
     }
-    LiveHostChatBridge.tryOpenOnLiveHost = _tryOpenChatOnHost;
+    LiveHostChatBridge.tryOpenChatOnLiveHost = _tryOpenChatOnHost;
     LiveHostChatBridge.onIncomingChatWhileLive = _onIncomingChatWhileLive;
+    LiveHostChatBridge.tryOpenVideoOnLiveHost = _tryOpenVideoOnHost;
+    LiveHostChatBridge.onIncomingVideoWhileLive = _onIncomingVideoWhileLive;
   }
 
   @override
   void dispose() {
-    if (LiveHostChatBridge.tryOpenOnLiveHost == _tryOpenChatOnHost) {
-      LiveHostChatBridge.tryOpenOnLiveHost = null;
+    if (LiveHostChatBridge.tryOpenChatOnLiveHost == _tryOpenChatOnHost) {
+      LiveHostChatBridge.tryOpenChatOnLiveHost = null;
     }
     if (LiveHostChatBridge.onIncomingChatWhileLive == _onIncomingChatWhileLive) {
       LiveHostChatBridge.onIncomingChatWhileLive = null;
+    }
+    if (LiveHostChatBridge.tryOpenVideoOnLiveHost == _tryOpenVideoOnHost) {
+      LiveHostChatBridge.tryOpenVideoOnLiveHost = null;
+    }
+    if (LiveHostChatBridge.onIncomingVideoWhileLive == _onIncomingVideoWhileLive) {
+      LiveHostChatBridge.onIncomingVideoWhileLive = null;
     }
     if (Get.isRegistered<LiveController>()) {
       Get.find<LiveController>().setHostScreenActive(false);
@@ -51,69 +60,127 @@ class _HostScreenState extends State<HostScreen> {
     Get.find<LiveController>().setPendingChatRequest(data);
   }
 
+  bool _tryOpenVideoOnHost(Map<String, dynamic> data) {
+    if (!Get.isRegistered<LiveController>()) return false;
+    final ctrl = Get.find<LiveController>();
+    if (!ctrl.isHostingLive) return false;
+    ctrl.openVideoCallFromPayload(data);
+    return true;
+  }
+
+  void _onIncomingVideoWhileLive(Map<String, dynamic> data) {
+    if (!Get.isRegistered<LiveController>()) return;
+    Get.find<LiveController>().setPendingVideoCallRequest(data);
+  }
+
+  void _confirmEnd(BuildContext ctx) {
+    if (!Get.isRegistered<LiveController>()) return;
+    final ctrl = Get.find<LiveController>();
+    showDialog(
+      context: ctx,
+      builder: (_) => AlertDialog(
+        backgroundColor: const Color(0xFF1A1A1A),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text(
+          'End Live?',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+        content: const Text(
+          'Your live session will end for all viewers.',
+          style: TextStyle(color: Colors.white60),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(color: Colors.white54),
+            ),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.of(ctx).pop();
+              await ctrl.endLive();
+            },
+            child: Text(
+              'End Live',
+              style: TextStyle(
+                color: Colors.red.shade400,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+      );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: GetBuilder<LiveController>(
-        builder: (ctrl) {
-          final chatPanelHeight = ctrl.privateChatPanelOpen && !ctrl.privateChatMinimized
-              ? MediaQuery.of(context).size.height * 0.48
-              : 0.0;
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) async {
+        if (didPop) return;
+        _confirmEnd(context);
+      },
+      child: Scaffold(
+        backgroundColor: Colors.black,
+        body: GetBuilder<LiveController>(
+          builder: (ctrl) {
+            return Stack(
+              fit: StackFit.expand,
+              children: [
+                _LocalVideo(ctrl: ctrl),
 
-          return Stack(
-            fit: StackFit.expand,
-            children: [
-              _LocalVideo(ctrl: ctrl),
+                _GradientOverlay(),
 
-              _GradientOverlay(),
-
+                Positioned(
+                  top: MediaQuery.of(context).padding.top + 12,
+                  left: 16,
+                  right: 16,
+                  child: _TopBar(
+                    ctrl: ctrl,
+                    onEnd: () => _confirmEnd(context),
+                  ),
+                ),
               Positioned(
-                top: MediaQuery.of(context).padding.top + 12,
-                left: 16,
                 right: 16,
-                child: _TopBar(ctrl: ctrl),
-              ),
-              Positioned(
-                right: 16,
-                bottom: 140 + chatPanelHeight,
+                bottom: 140,
                 child: _SideActions(ctrl: ctrl),
               ),
 
               Positioned(
                 left: 12,
                 right: 80,
-                bottom: 90 + chatPanelHeight,
+                bottom: 90,
                 child: _CommentsList(ctrl: ctrl),
               ),
 
               if (ctrl.pendingChatRequest != null)
                 _PendingChatBanner(ctrl: ctrl),
 
-              if (ctrl.activePrivateChatId != null &&
-                  ctrl.privateChatPanelOpen &&
-                  !ctrl.privateChatMinimized)
-                HostPrivateChatOverlay(
-                  chatId: ctrl.activePrivateChatId!,
-                  userName: ctrl.activePrivateChatUserName ?? 'User',
-                  onMinimize: ctrl.minimizePrivateChat,
-                  onClose: ctrl.closePrivateChat,
-                ),
+              if (ctrl.pendingVideoCallRequest != null)
+                _PendingVideoBanner(ctrl: ctrl),
 
-              if (ctrl.activePrivateChatId != null && ctrl.privateChatMinimized)
-                _MinimizedPrivateChatChip(ctrl: ctrl),
+              if (ctrl.activeVideoCallData != null &&
+                  ctrl.videoCallPanelOpen)
+                HostVideoPipOverlay(
+                  callData: ctrl.activeVideoCallData!,
+                  onClose: ctrl.closeVideoCall,
+                ),
 
               Positioned(
                 left: 0,
                 right: 0,
-                bottom: chatPanelHeight,
+                bottom: 0,
                 child: _CommentBar(ctrl: ctrl),
               ),
             ],
-          );
+      );
         },
+        ),
       ),
-    );
+      );
   }
 }
 
@@ -136,7 +203,7 @@ class _LocalVideo extends StatelessWidget {
         rtcEngine: ctrl.engine!,
         canvas: const VideoCanvas(uid: 0),
       ),
-    );
+      );
   }
 }
 
@@ -171,13 +238,14 @@ class _GradientOverlay extends StatelessWidget {
           ),
         ),
       ],
-    );
+      );
   }
 }
 
 class _TopBar extends StatelessWidget {
-  const _TopBar({required this.ctrl});
+  const _TopBar({required this.ctrl, required this.onEnd});
   final LiveController ctrl;
+  final VoidCallback onEnd;
 
   @override
   Widget build(BuildContext context) {
@@ -226,11 +294,33 @@ class _TopBar extends StatelessWidget {
           ),
         ),
 
+        if (ctrl.privateChatPanelOpen && ctrl.activePrivateChatId != null) ...[
+          const SizedBox(width: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withOpacity(0.85),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.lock_outline, color: Colors.white, size: 11),
+                const SizedBox(width: 4),
+                Text(
+                  ctrl.activePrivateChatUserName ?? 'Private',
+                  style: const TextStyle(color: Colors.white, fontSize: 10),
+                ),
+              ],
+            ),
+          ),
+        ],
+
         const Spacer(),
 
         // End Live button
         GestureDetector(
-          onTap: () => _confirmEnd(context, ctrl),
+          onTap: onEnd,
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
@@ -248,47 +338,7 @@ class _TopBar extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-
-  void _confirmEnd(BuildContext ctx, LiveController ctrl) {
-    showDialog(
-      context: ctx,
-      builder: (_) => AlertDialog(
-        backgroundColor: const Color(0xFF1A1A1A),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text(
-          'End Live?',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-        ),
-        content: const Text(
-          'Your live session will end for all viewers.',
-          style: TextStyle(color: Colors.white60),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: const Text(
-              'Cancel',
-              style: TextStyle(color: Colors.white54),
-            ),
-          ),
-          TextButton(
-            onPressed: () async {
-              await ctrl.endLive();
-              Get.back();
-            },
-            child: Text(
-              'End Live',
-              style: TextStyle(
-                color: Colors.red.shade400,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
+      );
   }
 }
 
@@ -341,7 +391,7 @@ class _SideActionsState extends State<_SideActions> {
           },
         ),
       ],
-    );
+      );
   }
 }
 
@@ -381,7 +431,7 @@ class _ActionBtn extends StatelessWidget {
           ],
         ],
       ),
-    );
+      );
   }
 }
 
@@ -392,6 +442,88 @@ class _CommentsList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final list = ctrl.comments;
+    final inPrivate =
+        ctrl.privateChatPanelOpen && ctrl.activePrivateChatId != null;
+
+    if (inPrivate) {
+      final tag = 'host_private_${ctrl.activePrivateChatId}';
+      return GetBuilder<ChatController>(
+        tag: tag,
+        builder: (chatCtrl) {
+          final msgs = chatCtrl.messages;
+          if (msgs.isEmpty) {
+            return Text(
+              'Private chat with ${ctrl.activePrivateChatUserName ?? 'user'}',
+              style: const TextStyle(color: Colors.white54, fontSize: 12),
+      );
+          }
+          return SizedBox(
+            height: 200,
+            child: ListView.builder(
+              reverse: true,
+              itemCount: msgs.length > 8 ? 8 : msgs.length,
+              itemBuilder: (_, i) {
+                final idx = msgs.length - 1 - i;
+                final m = msgs[idx];
+                final isUser = m['isUser'] == true;
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(
+                        isUser ? Icons.lock_outline : Icons.reply,
+                        color: AppColors.goldLight,
+                        size: 14,
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: isUser
+                                ? Colors.black45
+                                : AppColors.primary.withOpacity(0.5),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: RichText(
+                            text: TextSpan(
+                              children: [
+                                TextSpan(
+                                  text: isUser
+                                      ? '${ctrl.activePrivateChatUserName ?? 'User'}  '
+                                      : 'You  ',
+                                  style: const TextStyle(
+                                    color: AppColors.goldLight,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                                TextSpan(
+                                  text: m['message']?.toString() ?? '',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+      );
+              },
+            ),
+      );
+        },
+      );
+    }
+
     if (list.isEmpty) return const SizedBox.shrink();
 
     return SizedBox(
@@ -450,10 +582,10 @@ class _CommentsList extends StatelessWidget {
                 ),
               ],
             ),
-          );
+      );
         },
       ),
-    );
+      );
   }
 }
 
@@ -480,9 +612,12 @@ class _CommentBar extends StatelessWidget {
               child: TextField(
                 controller: ctrl.commentCtrl,
                 style: const TextStyle(color: Colors.white, fontSize: 14),
-                decoration: const InputDecoration(
-                  hintText: 'Say something...',
-                  hintStyle: TextStyle(color: Colors.white38),
+                decoration: InputDecoration(
+                  hintText: ctrl.privateChatPanelOpen &&
+                          ctrl.activePrivateChatId != null
+                      ? 'Private reply to ${ctrl.activePrivateChatUserName ?? 'user'}…'
+                      : 'Say something...',
+                  hintStyle: const TextStyle(color: Colors.white38),
                   border: InputBorder.none,
                 ),
                 onSubmitted: (_) => ctrl.sendComment('You (Host)'),
@@ -507,7 +642,7 @@ class _CommentBar extends StatelessWidget {
           ),
         ],
       ),
-    );
+      );
   }
 }
 
@@ -581,46 +716,78 @@ class _PendingChatBanner extends StatelessWidget {
           ),
         ),
       ),
-    );
+      );
   }
 }
 
-class _MinimizedPrivateChatChip extends StatelessWidget {
-  const _MinimizedPrivateChatChip({required this.ctrl});
+class _PendingVideoBanner extends StatelessWidget {
+  const _PendingVideoBanner({required this.ctrl});
   final LiveController ctrl;
 
   @override
   Widget build(BuildContext context) {
+    final data = ctrl.pendingVideoCallRequest ?? {};
+    final name = data['caller_name']?.toString() ?? 'User';
+
     return Positioned(
-      right: 12,
+      left: 16,
+      right: 16,
       bottom: 150,
       child: Material(
-        elevation: 6,
-        borderRadius: BorderRadius.circular(24),
-        color: AppColors.primary,
-        child: InkWell(
-          onTap: ctrl.restorePrivateChat,
-          borderRadius: BorderRadius.circular(24),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.chat_bubble, color: Colors.white, size: 18),
-                const SizedBox(width: 6),
-                Text(
-                  ctrl.activePrivateChatUserName ?? 'Private chat',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 13,
+        elevation: 10,
+        borderRadius: BorderRadius.circular(14),
+        color: const Color(0xFF1E1E1E),
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.videocam_outlined,
+                      color: AppColors.goldLight, size: 22),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      '$name wants video on live',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                      ),
+                    ),
                   ),
-                ),
-              ],
-            ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: ctrl.rejectPendingVideoCall,
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.white70,
+                        side: const BorderSide(color: Colors.white24),
+                      ),
+                      child: const Text('Decline'),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: FilledButton(
+                      onPressed: ctrl.acceptPendingVideoCall,
+                      style: FilledButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                      ),
+                      child: const Text('Accept video'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
       ),
-    );
+      );
   }
 }

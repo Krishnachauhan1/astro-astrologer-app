@@ -149,7 +149,7 @@ class ChatListController extends GetxController {
             debugPrint('Chat list query error: $e');
             _listenAllAndFilterClientSide(astroId);
           },
-        );
+      );
   }
 
   void _listenAllAndFilterClientSide(int astroId) {
@@ -165,7 +165,7 @@ class ChatListController extends GetxController {
         isLoading = false;
         update();
       },
-    );
+      );
   }
 
   int _updatedAtMillis(Map<String, dynamic> session) {
@@ -178,7 +178,7 @@ class ChatListController extends GetxController {
     final sorted = List<Map<String, dynamic>>.from(list);
     sorted.sort(
       (a, b) => _updatedAtMillis(b).compareTo(_updatedAtMillis(a)),
-    );
+      );
     return sorted;
   }
 

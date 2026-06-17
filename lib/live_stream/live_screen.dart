@@ -21,7 +21,7 @@ class LiveScreen extends StatelessWidget {
         ],
       ),
       barrierDismissible: true,
-    );
+      );
     if (ok == true) {
       await ctrl.endLive();
     }
@@ -132,7 +132,7 @@ class LiveScreen extends StatelessWidget {
           ),
         ),
       ),
-    );
+      );
   }
 }
 
@@ -154,7 +154,7 @@ class _GoLiveCard extends StatelessWidget {
         ],
       ),
       barrierDismissible: true,
-    );
+      );
     if (ok == true) {
       await ctrl.endLive();
     }
@@ -184,7 +184,7 @@ class _GoLiveCard extends StatelessWidget {
         ],
       ),
       barrierDismissible: true,
-    );
+      );
 
     final title = (result ?? '').trim();
     if (title.isEmpty) return;
@@ -320,7 +320,7 @@ class _GoLiveCard extends StatelessWidget {
           ],
         ),
       ),
-    );
+      );
   }
 }
 
@@ -379,7 +379,7 @@ class _InfoCard extends StatelessWidget {
           ],
         ),
       ),
-    );
+      );
   }
 }
 
@@ -426,6 +426,6 @@ class _WarningCard extends StatelessWidget {
           ],
         ),
       ),
-    );
+      );
   }
 }

@@ -28,21 +28,21 @@ class DefaultFirebaseOptions {
         throw UnsupportedError(
           'DefaultFirebaseOptions have not been configured for macos - '
           'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+      );
       case TargetPlatform.windows:
         throw UnsupportedError(
           'DefaultFirebaseOptions have not been configured for windows - '
           'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+      );
       case TargetPlatform.linux:
         throw UnsupportedError(
           'DefaultFirebaseOptions have not been configured for linux - '
           'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+      );
       default:
         throw UnsupportedError(
           'DefaultFirebaseOptions are not supported for this platform.',
-        );
+      );
     }
   }
 
@@ -54,7 +54,7 @@ class DefaultFirebaseOptions {
     authDomain: 'astro-2210b.firebaseapp.com',
     storageBucket: 'astro-2210b.firebasestorage.app',
     measurementId: 'G-0ZL266SQ5C',
-  );
+      );
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyCOdmAtLTrHw23hVak6gwyQZPK7sSdNKgE',
@@ -62,7 +62,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '741037305385',
     projectId: 'astro-2210b',
     storageBucket: 'astro-2210b.firebasestorage.app',
-  );
+      );
 
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyAHvSziYkRCRkgEyiM0VCL-QsbYLqhsAC4',
@@ -71,5 +71,5 @@ class DefaultFirebaseOptions {
     projectId: 'astro-2210b',
     storageBucket: 'astro-2210b.firebasestorage.app',
     iosBundleId: 'com.astrosarthikonnectastrologerapp.astrosarthiKonnectAstrologerApp',
-  );
+      );
 }

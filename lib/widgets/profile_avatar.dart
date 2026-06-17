@@ -43,7 +43,7 @@ class ProfileAvatar extends StatelessWidget {
               errorBuilder: (_, __, ___) => _placeholder(initials),
             )
           : _placeholder(initials),
-    );
+      );
   }
 
   Widget _placeholder(String initials) {
@@ -59,6 +59,6 @@ class ProfileAvatar extends StatelessWidget {
           ),
         ),
       ),
-    );
+      );
   }
 }

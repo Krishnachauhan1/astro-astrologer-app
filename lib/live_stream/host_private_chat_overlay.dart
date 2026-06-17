@@ -35,7 +35,7 @@ class _HostPrivateChatOverlayState extends State<HostPrivateChatOverlay> {
         initialUserName: widget.userName,
       ),
       tag: _tag,
-    );
+      );
   }
 
   @override
@@ -74,13 +74,13 @@ class _HostPrivateChatOverlayState extends State<HostPrivateChatOverlay> {
                         textAlign: TextAlign.center,
                         style: TextStyle(color: Colors.white54, fontSize: 13),
                       ),
-                    );
+      );
                   }
                   return ListView.builder(
                     padding: const EdgeInsets.all(12),
                     itemCount: ctrl.messages.length,
                     itemBuilder: (_, i) => _MessageBubble(ctrl.messages[i]),
-                  );
+      );
                 },
               ),
             ),
@@ -94,7 +94,7 @@ class _HostPrivateChatOverlayState extends State<HostPrivateChatOverlay> {
           ],
         ),
       ),
-    );
+      );
   }
 
   Widget _buildHeader() {
@@ -150,7 +150,7 @@ class _HostPrivateChatOverlayState extends State<HostPrivateChatOverlay> {
           ),
         ],
       ),
-    );
+      );
   }
 }
 
@@ -205,7 +205,7 @@ class _InputBar extends StatelessWidget {
           ],
         ),
       ),
-    );
+      );
   }
 }
 
@@ -236,6 +236,6 @@ class _MessageBubble extends StatelessWidget {
           ),
         ),
       ),
-    );
+      );
   }
 }

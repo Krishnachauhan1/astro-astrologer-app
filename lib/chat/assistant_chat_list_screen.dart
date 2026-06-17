@@ -40,7 +40,7 @@ class AssistantChatListScreen extends StatelessWidget {
                 ),
               ],
             ),
-          );
+      );
         }
 
         return ListView.separated(
@@ -124,13 +124,13 @@ class AssistantChatListScreen extends StatelessWidget {
                 if (id.isEmpty) return;
                 Get.to(() => AssistantChatScreen(sessionId: id, readOnly: true));
               },
-            );
+      );
           },
-        );
+      );
           },
-        );
+      );
       },
-    );
+      );
   }
 }
 

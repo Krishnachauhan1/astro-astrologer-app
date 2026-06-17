@@ -10,7 +10,7 @@ Future<String?> resolveFcmToken() async {
       alert: true,
       badge: true,
       sound: true,
-    );
+      );
 
     if (!kIsWeb && Platform.isIOS) {
       for (var attempt = 0; attempt < 10; attempt++) {

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:agora_rtc_engine/agora_rtc_engine.dart';
 import 'package:astrosarthi_konnect_astrologer_app/authentication/auth_controller.dart';
 import 'package:astrosarthi_konnect_astrologer_app/utils/call_session_api.dart';
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -40,10 +41,15 @@ class AgoraController extends GetxController {
 
   final Map<String, dynamic> callData;
 
+  final bool embeddedOnLive;
+  final VoidCallback? onEmbeddedEnded;
+
   AgoraController({
     required this.callData,
     required this.isVideoCall,
     required this.astrologerName,
+    this.embeddedOnLive = false,
+    this.onEmbeddedEnded,
   });
 
   void _startTimer() {
@@ -89,14 +95,14 @@ class AgoraController extends GetxController {
     // the remote when they appear.
     _expectedRemoteUid = int.tryParse(
       (callData['caller_uid'] ?? callData['callerUid'] ?? '').toString(),
-    );
+      );
 
     _callSessionId = int.tryParse(
       (callData['session_id'] ?? callData['sessionId'] ?? '').toString(),
-    );
+      );
     _ratePerMin = int.tryParse(
       (callData['rate_per_min'] ?? callData['ratePerMin'] ?? '').toString(),
-    );
+      );
 
     print("APP ID = $_agoraAppId");
     print("CHANNEL = $_agoraChannel");
@@ -194,7 +200,7 @@ class AgoraController extends GetxController {
           onJoinChannelSuccess: (connection, elapsed) {
             print(
               "ASTRO JOINED CHANNEL => ${connection.channelId} localUid=${connection.localUid} elapsed=$elapsed",
-            );
+      );
             isInitialized = true;
             isLoading = false;
             try {
@@ -212,7 +218,7 @@ class AgoraController extends GetxController {
           onRejoinChannelSuccess: (connection, elapsed) {
             print(
               "ASTRO REJOINED CHANNEL => ${connection.channelId} localUid=${connection.localUid} elapsed=$elapsed",
-            );
+      );
           },
           onLeaveChannel: (connection, stats) {
             print("ASTRO LEFT CHANNEL => ${connection.channelId}");
@@ -263,7 +269,7 @@ class AgoraController extends GetxController {
               (connection, remoteUid, state, reason, elapsed) {
                 print(
                   "REMOTE AUDIO STATE => uid=$remoteUid state=$state reason=$reason",
-                );
+      );
               },
           onRemoteVideoStateChanged:
               (connection, remoteUid, state, reason, elapsed) {
@@ -376,7 +382,7 @@ class AgoraController extends GetxController {
     engine = null;
 
     try {
-      if (Get.key.currentState?.canPop() ?? false) {
+      if (!embeddedOnLive && (Get.key.currentState?.canPop() ?? false)) {
         Get.back();
       }
     } catch (e) {
@@ -397,8 +403,11 @@ class AgoraController extends GetxController {
       if (sessionId != null) {
         await endCallSession(sessionId);
       }
+      if (embeddedOnLive) {
+        onEmbeddedEnded?.call();
+      }
       try {
-        if (Get.isRegistered<AgoraController>()) {
+        if (!embeddedOnLive && Get.isRegistered<AgoraController>()) {
           Get.delete<AgoraController>(force: true);
         }
       } catch (_) {}

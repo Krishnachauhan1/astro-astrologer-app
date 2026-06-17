@@ -65,7 +65,7 @@ class AssistantChatListController extends GetxController {
         debugPrint('Assistant chat list query error: $e');
         _listenAllAndFilterClientSide(astroId);
       },
-    );
+      );
   }
 
   void _listenAllAndFilterClientSide(int astroId) {
@@ -84,7 +84,7 @@ class AssistantChatListController extends GetxController {
         isLoading = false;
         update();
       },
-    );
+      );
   }
 
   int _updatedAtMillis(Map<String, dynamic> session) {
@@ -97,7 +97,7 @@ class AssistantChatListController extends GetxController {
     final sorted = List<Map<String, dynamic>>.from(list);
     sorted.sort(
       (a, b) => _updatedAtMillis(b).compareTo(_updatedAtMillis(a)),
-    );
+      );
     return sorted;
   }
 

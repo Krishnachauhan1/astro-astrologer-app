@@ -8,6 +8,7 @@ import 'package:astrosarthi_konnect_astrologer_app/vastu/vastu_screen.dart';
 import 'package:astrosarthi_konnect_astrologer_app/widgets/profile_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:astrosarthi_konnect_astrologer_app/utils/app_snackbar.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -20,9 +21,7 @@ class HomeScreen extends StatelessWidget {
           SliverAppBar(
             expandedHeight: 180,
             floating: false,
-            pinned: true,
-            backgroundColor: AppColors.primary,
-            flexibleSpace: FlexibleSpaceBar(
+            pinned: true,            flexibleSpace: FlexibleSpaceBar(
               background: Container(
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
@@ -93,7 +92,7 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
             title: const Text(
-              'Astrosarthi konnect',
+              'Astrosarathi Konnect',
               style: TextStyle(
                 color: Colors.white,
                 // fontWeight: FontWeight.bold,
@@ -205,7 +204,7 @@ class HomeScreen extends StatelessWidget {
           ),
         ],
       ),
-    );
+      );
   }
 
   Widget _statusChip(
@@ -224,7 +223,7 @@ class HomeScreen extends StatelessWidget {
         color: selected ? color : AppColors.textSecondary,
         fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
       ),
-    );
+      );
   }
 
   Widget _sectionTitle(String t) => Text(
@@ -234,7 +233,7 @@ class HomeScreen extends StatelessWidget {
       fontWeight: FontWeight.bold,
       color: AppColors.textPrimary,
     ),
-  );
+      );
 
   Widget _quickActionTile(
     BuildContext context,
@@ -243,12 +242,10 @@ class HomeScreen extends StatelessWidget {
     Color color,
   ) {
     void showIncomingOnlyInfo(String channel) {
-      Get.snackbar(
+      AppSnackbar.show(
         '$channel',
         'Stay online on home screen. Incoming $channel from users will ring here.',
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: AppColors.primaryDark,
-        colorText: Colors.white,
         margin: const EdgeInsets.all(12),
         duration: const Duration(seconds: 3),
       );
@@ -303,6 +300,6 @@ class HomeScreen extends StatelessWidget {
           ],
         ),
       ),
-    );
+      );
   }
 }

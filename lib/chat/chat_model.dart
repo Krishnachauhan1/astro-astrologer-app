@@ -19,7 +19,7 @@ class ChatMessage {
     senderType: json['sender_type'] ?? 'user',
     senderId: json['sender_id'] ?? 0,
     createdAt: json['created_at'] ?? '',
-  );
+      );
 
   bool get isUser => senderType == 'user';
 }

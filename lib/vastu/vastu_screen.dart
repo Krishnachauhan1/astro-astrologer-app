@@ -2,6 +2,7 @@ import 'package:astrosarthi_konnect_astrologer_app/vastu/vastu_attachment_helper
 import 'package:astrosarthi_konnect_astrologer_app/vastu/vastu_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:astrosarthi_konnect_astrologer_app/utils/app_snackbar.dart';
 class VastuScreen extends StatelessWidget {
   const VastuScreen({super.key});
 
@@ -149,10 +150,10 @@ class VastuScreen extends StatelessWidget {
                                       ? mapId
                                       : int.tryParse('$mapId');
                                   if (id == null) {
-                                    Get.snackbar(
+                                    AppSnackbar.show(
                                       'Attachment',
                                       'Map ID not available',
-                                    );
+      );
                                     return;
                                   }
                                   openVastuAttachment(
@@ -163,7 +164,7 @@ class VastuScreen extends StatelessWidget {
                                     fileName: homeMap['attachment_name']
                                             ?.toString() ??
                                         'Home attachment',
-                                  );
+      );
                                 },
                                 icon: Icon(
                                   homeMap['attachment_type'] == 'pdf'
@@ -188,13 +189,13 @@ class VastuScreen extends StatelessWidget {
                       ],
                     ),
                   ),
-                );
+      );
               },
             ),
-          );
+      );
         },
       ),
-    );
+      );
   }
 
 }

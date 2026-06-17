@@ -1,6 +1,7 @@
 import 'package:astrosarthi_konnect_astrologer_app/servicess/api_service.dart';
 import 'package:astrosarthi_konnect_astrologer_app/utils/session_request_api.dart';
 import 'package:get/get.dart';
+import 'package:astrosarthi_konnect_astrologer_app/utils/app_snackbar.dart';
 
 class AstrologerNotificationController extends GetxController {
   bool isLoading = false;
@@ -35,7 +36,7 @@ class AstrologerNotificationController extends GetxController {
     final isChat = SessionRequestApi.isChatRequest(item);
     final ok = await SessionRequestApi.acceptSession(sessionId, isChat: isChat);
     if (!ok) {
-      Get.snackbar(
+      AppSnackbar.show(
         'Request',
         'Could not accept. Please try again.',
         snackPosition: SnackPosition.BOTTOM,
@@ -53,7 +54,7 @@ class AstrologerNotificationController extends GetxController {
     await SessionRequestApi.rejectSession(
       sessionId,
       isChat: SessionRequestApi.isChatRequest(item),
-    );
+      );
     await fetchNotifications();
   }
 }
