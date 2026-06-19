@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:astrosarthi_konnect_astrologer_app/authentication/auth_controller.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
@@ -13,9 +14,27 @@ class ChatController extends GetxController {
   late String userName;
   int? customerUserId;
   int? astrologerId;
+  DateTime? sessionExpiresAt;
+  Timer? _sessionTimer;
   final String initialChatId;
   final String initialUserName;
   ChatController({required this.initialChatId, required this.initialUserName});
+
+  Duration get sessionRemaining {
+    if (sessionExpiresAt == null) return Duration.zero;
+    final rem = sessionExpiresAt!.difference(DateTime.now());
+    return rem.isNegative ? Duration.zero : rem;
+  }
+
+  String get countdownLabel {
+    final totalSec = sessionRemaining.inSeconds.clamp(0, 9999);
+    final m = totalSec ~/ 60;
+    final s = totalSec % 60;
+    return '$m:${s.toString().padLeft(2, '0')}';
+  }
+
+  bool get showSessionTimer =>
+      sessionExpiresAt != null && sessionRemaining > Duration.zero;
 
   @override
   void onInit() {
@@ -24,7 +43,50 @@ class ChatController extends GetxController {
     userName = initialUserName;
     astrologerId = _loggedInAstrologerId();
     _loadSessionMeta();
+    _listenSessionTimer();
     listenMessages();
+  }
+
+  void _listenSessionTimer() {
+    _firestore.collection('chat_sessions').doc(chatId).snapshots().listen((doc) {
+      if (!doc.exists) return;
+      final data = doc.data() ?? {};
+      DateTime? nextExpiry;
+
+      final expiresAt = data['expiresAt'];
+      if (expiresAt is Timestamp) {
+        nextExpiry = expiresAt.toDate();
+      } else if (expiresAt != null) {
+        nextExpiry = DateTime.tryParse(expiresAt.toString());
+      }
+
+      if (data['status'] == 'paused') {
+        final remSec = data['remainingSeconds'];
+        final secs = remSec is int
+            ? remSec
+            : int.tryParse('$remSec') ?? 0;
+        if (secs > 0) {
+          nextExpiry = DateTime.now().add(Duration(seconds: secs));
+        }
+      }
+
+      if (nextExpiry != sessionExpiresAt) {
+        sessionExpiresAt = nextExpiry;
+        _startSessionTimer();
+        update();
+      }
+    });
+  }
+
+  void _startSessionTimer() {
+    _sessionTimer?.cancel();
+    if (sessionExpiresAt == null) return;
+    _sessionTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (sessionRemaining <= Duration.zero) {
+        _sessionTimer?.cancel();
+      }
+      update();
+    });
   }
 
   int? _loggedInAstrologerId() {
@@ -127,6 +189,7 @@ class ChatController extends GetxController {
 
   @override
   void onClose() {
+    _sessionTimer?.cancel();
     msgController.dispose();
     super.onClose();
   }

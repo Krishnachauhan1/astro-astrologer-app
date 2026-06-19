@@ -107,6 +107,15 @@ class SessionRequestApi {
       'caller_image':
           payload['caller_image'] ?? payload['user_avatar'] ?? payload['callerImage'],
       'callType': callType.contains('video') ? 'video' : 'audio',
+      'expires_at': payload['expires_at'] ??
+          payload['session_expires_at'] ??
+          item['expires_at'],
+      'session_expires_at': payload['session_expires_at'] ??
+          payload['expires_at'] ??
+          item['session_expires_at'],
+      'duration_minutes': payload['duration_minutes'] ?? item['duration_minutes'],
+      'session_minutes': payload['session_minutes'] ?? item['session_minutes'],
+      'rate_per_min': payload['rate_per_min'] ?? item['rate_per_min'],
     };
   }
 

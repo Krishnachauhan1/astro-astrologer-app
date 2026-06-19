@@ -37,10 +37,20 @@ class AgoraController extends GetxController {
   Timer? _timer;
   Timer? _offlineGraceTimer;
   bool _callEnded = false;
+  bool _sessionCountdownStarted = false;
+
+  DateTime? sessionExpiresAt;
+  final int sessionMinutes;
 
   String get rateText => _ratePerMin != null ? '₹$_ratePerMin/min' : '';
   String get channelName => _agoraChannel ?? '';
   int? get remoteVideoUid => remoteUid ?? _expectedRemoteUid;
+
+  Duration get sessionRemaining {
+    if (sessionExpiresAt == null) return Duration.zero;
+    final rem = sessionExpiresAt!.difference(DateTime.now());
+    return rem.isNegative ? Duration.zero : rem;
+  }
 
   final Map<String, dynamic> callData;
 
@@ -53,9 +63,15 @@ class AgoraController extends GetxController {
     required this.astrologerName,
     this.embeddedOnLive = false,
     this.onEmbeddedEnded,
+    this.sessionExpiresAt,
+    this.sessionMinutes = 5,
   });
 
   void _startTimer() {
+    if (sessionExpiresAt != null) {
+      _startSessionCountdown();
+      return;
+    }
     _timer?.cancel();
     _seconds = 0;
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
@@ -64,10 +80,29 @@ class AgoraController extends GetxController {
     });
   }
 
+  void _startSessionCountdown() {
+    if (sessionExpiresAt == null || _sessionCountdownStarted) return;
+    _sessionCountdownStarted = true;
+    _timer?.cancel();
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (sessionRemaining <= Duration.zero) {
+        _timer?.cancel();
+      }
+      update();
+    });
+    update();
+  }
+
   String get formattedTime {
+    if (sessionExpiresAt != null) {
+      final sec = sessionRemaining.inSeconds.clamp(0, 999999);
+      final m = (sec ~/ 60).toString().padLeft(2, '0');
+      final s = (sec % 60).toString().padLeft(2, '0');
+      return '$m:$s';
+    }
     final minutes = (_seconds ~/ 60).toString().padLeft(2, '0');
     final seconds = (_seconds % 60).toString().padLeft(2, '0');
-    return "$minutes:$seconds";
+    return '$minutes:$seconds';
   }
 
   @override
@@ -106,6 +141,17 @@ class AgoraController extends GetxController {
     _ratePerMin = int.tryParse(
       (callData['rate_per_min'] ?? callData['ratePerMin'] ?? '').toString(),
       );
+
+    final expiresRaw = callData['sessionExpiresAt'] ??
+        callData['session_expires_at'] ??
+        callData['expires_at'];
+    sessionExpiresAt ??= expiresRaw != null
+        ? DateTime.tryParse(expiresRaw.toString())?.toLocal()
+        : null;
+
+    if (sessionExpiresAt != null && sessionExpiresAt!.isAfter(DateTime.now())) {
+      _startSessionCountdown();
+    }
 
     print("APP ID = $_agoraAppId");
     print("CHANNEL = $_agoraChannel");

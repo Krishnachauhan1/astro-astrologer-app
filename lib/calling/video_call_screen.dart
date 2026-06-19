@@ -14,6 +14,13 @@ class VideoCallScreen extends StatefulWidget {
 class _VideoCallScreenState extends State<VideoCallScreen> {
   late final Map<String, dynamic> args;
 
+  DateTime? _parseExpiresAt(Map<String, dynamic> data) {
+    final raw = data['sessionExpiresAt'] ??
+        data['session_expires_at'] ??
+        data['expires_at'];
+    return raw != null ? DateTime.tryParse(raw.toString())?.toLocal() : null;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -26,6 +33,8 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
         isVideoCall: true,
         astrologerName: 'User',
         callData: args,
+        sessionExpiresAt: _parseExpiresAt(args),
+        sessionMinutes: int.tryParse('${args['session_minutes'] ?? args['duration_minutes'] ?? args['minutes']}') ?? 5,
       ),
       );
   }
@@ -235,7 +244,7 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
                               ),
                             ),
                             Text(
-                              ctrl.remoteJoined
+                              ctrl.sessionExpiresAt != null || ctrl.remoteJoined
                                   ? ctrl.formattedTime
                                   : 'Connecting...',
                               style: const TextStyle(
