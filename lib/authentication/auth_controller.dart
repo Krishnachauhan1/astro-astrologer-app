@@ -1,5 +1,5 @@
-import 'package:astrosarthi_konnect_astrologer_app/authentication/user_model.dart';
-import 'package:astrosarthi_konnect_astrologer_app/servicess/api_service.dart';
+import 'package:astrosarthi_vendor/authentication/user_model.dart';
+import 'package:astrosarthi_vendor/servicess/api_service.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:get/get.dart';
 

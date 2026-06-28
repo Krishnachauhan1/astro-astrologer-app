@@ -1,4 +1,4 @@
-package com.astrosarthi_konnect_astrologer_app
+package com.astrosarthi.vendor
 
 import io.flutter.embedding.android.FlutterActivity
 

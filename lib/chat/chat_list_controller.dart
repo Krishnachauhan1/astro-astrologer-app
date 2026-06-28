@@ -1,7 +1,7 @@
 // import 'package:flutter/material.dart';
 // import 'package:get/get.dart';
-// import 'package:astrosarthi_konnect_astrologer_app/chat/chat_model.dart';
-// import 'package:astrosarthi_konnect_astrologer_app/servicess/api_service.dart';
+// import 'package:astrosarthi_vendor/chat/chat_model.dart';
+// import 'package:astrosarthi_vendor/servicess/api_service.dart';
 
 // class ChatListController extends GetxController {
 //   List<dynamic> sessions = [];

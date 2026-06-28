@@ -1,7 +1,7 @@
-// import 'package:astrosarthi_konnect_astrologer_app/chat/chat_screen.dart';
+// import 'package:astrosarthi_vendor/chat/chat_screen.dart';
 // import 'package:flutter/material.dart';
 // import 'package:get/get.dart';
-// import 'package:astrosarthi_konnect_astrologer_app/chat/chat_list_controller.dart';
+// import 'package:astrosarthi_vendor/chat/chat_list_controller.dart';
 
 // class ChatList extends StatelessWidget {
 //   const ChatList({super.key});
@@ -70,7 +70,7 @@
 //   }
 // }
 
-import 'package:astrosarthi_konnect_astrologer_app/chat/chat_controller.dart';
+import 'package:astrosarthi_vendor/chat/chat_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'chat_list_controller.dart';

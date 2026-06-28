@@ -70,6 +70,6 @@ class DefaultFirebaseOptions {
     messagingSenderId: '741037305385',
     projectId: 'astro-2210b',
     storageBucket: 'astro-2210b.firebasestorage.app',
-    iosBundleId: 'com.astrosarthikonnectastrologerapp.astrosarthiKonnectAstrologerApp',
+    iosBundleId: 'com.astrosarthi.vendor',
   );
 }

@@ -1,6 +1,6 @@
 import 'dart:async';
-import 'package:astrosarthi_konnect_astrologer_app/calling/audio_call_screen.dart';
-import 'package:astrosarthi_konnect_astrologer_app/calling/video_call_screen.dart';
+import 'package:astrosarthi_vendor/calling/audio_call_screen.dart';
+import 'package:astrosarthi_vendor/calling/video_call_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';

@@ -1,5 +1,5 @@
-import 'package:astrosarthi_konnect_astrologer_app/authentication/auth_controller.dart';
-import 'package:astrosarthi_konnect_astrologer_app/main.dart';
+import 'package:astrosarthi_vendor/authentication/auth_controller.dart';
+import 'package:astrosarthi_vendor/main.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
