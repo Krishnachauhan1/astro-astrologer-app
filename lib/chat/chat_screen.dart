@@ -31,6 +31,37 @@ class ChatScreen extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
+                if (ctrl.showSessionTimer)
+                  Container(
+                    margin: const EdgeInsets.only(left: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.timer_outlined,
+                          color: Colors.white,
+                          size: 14,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          ctrl.countdownLabel,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
               ],
             ),
           ),
@@ -58,9 +89,9 @@ class ChatScreen extends StatelessWidget {
               ),
             ],
           ),
-        );
+      );
       },
-    );
+      );
   }
 }
 
@@ -130,7 +161,7 @@ class _InputBar extends StatelessWidget {
           ),
         ],
       ),
-    );
+      );
   }
 }
 
@@ -167,6 +198,6 @@ class _MessageBubble extends StatelessWidget {
           ),
         ),
       ),
-    );
+      );
   }
 }

@@ -1,66 +1,20 @@
 import 'package:agora_rtc_engine/agora_rtc_engine.dart';
-import 'package:astrosarthi_konnect_astrologer_app/app_theme.dart';
-import 'package:astrosarthi_konnect_astrologer_app/live_stream/live_controller.dart';
-import 'package:astrosarthi_konnect_astrologer_app/live_stream/live_host_chat_bridge.dart';
-import 'package:astrosarthi_konnect_astrologer_app/live_stream/host_private_chat_overlay.dart';
+import 'package:astrosarthi_vendor/app_theme.dart';
+import 'package:astrosarthi_vendor/live_stream/live_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-class HostScreen extends StatefulWidget {
+class HostScreen extends StatelessWidget {
   const HostScreen({super.key});
 
   @override
-  State<HostScreen> createState() => _HostScreenState();
-}
-
-class _HostScreenState extends State<HostScreen> {
-  @override
-  void initState() {
-    super.initState();
-    if (Get.isRegistered<LiveController>()) {
-      Get.find<LiveController>().setHostScreenActive(true);
-    }
-    LiveHostChatBridge.tryOpenOnLiveHost = _tryOpenChatOnHost;
-    LiveHostChatBridge.onIncomingChatWhileLive = _onIncomingChatWhileLive;
-  }
-
-  @override
-  void dispose() {
-    if (LiveHostChatBridge.tryOpenOnLiveHost == _tryOpenChatOnHost) {
-      LiveHostChatBridge.tryOpenOnLiveHost = null;
-    }
-    if (LiveHostChatBridge.onIncomingChatWhileLive == _onIncomingChatWhileLive) {
-      LiveHostChatBridge.onIncomingChatWhileLive = null;
-    }
-    if (Get.isRegistered<LiveController>()) {
-      Get.find<LiveController>().setHostScreenActive(false);
-    }
-    super.dispose();
-  }
-
-  bool _tryOpenChatOnHost(Map<String, dynamic> data) {
-    if (!Get.isRegistered<LiveController>()) return false;
-    final ctrl = Get.find<LiveController>();
-    if (!ctrl.isHostingLive) return false;
-    ctrl.openPrivateChatFromPayload(data);
-    return true;
-  }
-
-  void _onIncomingChatWhileLive(Map<String, dynamic> data) {
-    if (!Get.isRegistered<LiveController>()) return;
-    Get.find<LiveController>().setPendingChatRequest(data);
-  }
-
-  @override
   Widget build(BuildContext context) {
+    Get.find<LiveController>();
+
     return Scaffold(
       backgroundColor: Colors.black,
       body: GetBuilder<LiveController>(
         builder: (ctrl) {
-          final chatPanelHeight = ctrl.privateChatPanelOpen && !ctrl.privateChatMinimized
-              ? MediaQuery.of(context).size.height * 0.48
-              : 0.0;
-
           return Stack(
             fit: StackFit.expand,
             children: [
@@ -76,37 +30,21 @@ class _HostScreenState extends State<HostScreen> {
               ),
               Positioned(
                 right: 16,
-                bottom: 140 + chatPanelHeight,
+                bottom: 140,
                 child: _SideActions(ctrl: ctrl),
               ),
 
               Positioned(
                 left: 12,
                 right: 80,
-                bottom: 90 + chatPanelHeight,
+                bottom: 90,
                 child: _CommentsList(ctrl: ctrl),
               ),
-
-              if (ctrl.pendingChatRequest != null)
-                _PendingChatBanner(ctrl: ctrl),
-
-              if (ctrl.activePrivateChatId != null &&
-                  ctrl.privateChatPanelOpen &&
-                  !ctrl.privateChatMinimized)
-                HostPrivateChatOverlay(
-                  chatId: ctrl.activePrivateChatId!,
-                  userName: ctrl.activePrivateChatUserName ?? 'User',
-                  onMinimize: ctrl.minimizePrivateChat,
-                  onClose: ctrl.closePrivateChat,
-                ),
-
-              if (ctrl.activePrivateChatId != null && ctrl.privateChatMinimized)
-                _MinimizedPrivateChatChip(ctrl: ctrl),
 
               Positioned(
                 left: 0,
                 right: 0,
-                bottom: chatPanelHeight,
+                bottom: 0,
                 child: _CommentBar(ctrl: ctrl),
               ),
             ],
@@ -274,9 +212,9 @@ class _TopBar extends StatelessWidget {
             ),
           ),
           TextButton(
-            onPressed: () async {
-              await ctrl.endLive();
+            onPressed: () {
               Get.back();
+              ctrl.endLive();
             },
             child: Text(
               'End Live',
@@ -506,120 +444,6 @@ class _CommentBar extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _PendingChatBanner extends StatelessWidget {
-  const _PendingChatBanner({required this.ctrl});
-  final LiveController ctrl;
-
-  @override
-  Widget build(BuildContext context) {
-    final data = ctrl.pendingChatRequest ?? {};
-    final name = data['caller_name']?.toString() ??
-        data['user_name']?.toString() ??
-        'User';
-
-    return Positioned(
-      left: 16,
-      right: 16,
-      bottom: 150,
-      child: Material(
-        elevation: 10,
-        borderRadius: BorderRadius.circular(14),
-        color: const Color(0xFF1E1E1E),
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                children: [
-                  const Icon(Icons.chat_bubble_outline,
-                      color: AppColors.goldLight, size: 22),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      '$name wants to chat on live',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: ctrl.rejectPendingChat,
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.white70,
-                        side: const BorderSide(color: Colors.white24),
-                      ),
-                      child: const Text('Decline'),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: FilledButton(
-                      onPressed: ctrl.acceptPendingChat,
-                      style: FilledButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                      ),
-                      child: const Text('Accept & reply'),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _MinimizedPrivateChatChip extends StatelessWidget {
-  const _MinimizedPrivateChatChip({required this.ctrl});
-  final LiveController ctrl;
-
-  @override
-  Widget build(BuildContext context) {
-    return Positioned(
-      right: 12,
-      bottom: 150,
-      child: Material(
-        elevation: 6,
-        borderRadius: BorderRadius.circular(24),
-        color: AppColors.primary,
-        child: InkWell(
-          onTap: ctrl.restorePrivateChat,
-          borderRadius: BorderRadius.circular(24),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.chat_bubble, color: Colors.white, size: 18),
-                const SizedBox(width: 6),
-                Text(
-                  ctrl.activePrivateChatUserName ?? 'Private chat',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w700,
-                    fontSize: 13,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
       ),
     );
   }

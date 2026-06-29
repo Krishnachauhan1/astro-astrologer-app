@@ -1,11 +1,14 @@
-import 'package:astrosarthi_konnect_astrologer_app/app_theme.dart';
-import 'package:astrosarthi_konnect_astrologer_app/authentication/auth_controller.dart';
-import 'package:astrosarthi_konnect_astrologer_app/authentication/login_screen.dart';
-import 'package:astrosarthi_konnect_astrologer_app/chat/chat_list.dart';
-import 'package:astrosarthi_konnect_astrologer_app/earnings/earnings_screen.dart';
-import 'package:astrosarthi_konnect_astrologer_app/utils/profile_photo_url.dart';
-import 'package:astrosarthi_konnect_astrologer_app/vastu/vastu_screen.dart';
-import 'package:astrosarthi_konnect_astrologer_app/widgets/profile_avatar.dart';
+import 'package:astrosarthi_vendor/app_theme.dart';
+import 'package:astrosarthi_vendor/authentication/auth_controller.dart';
+import 'package:astrosarthi_vendor/authentication/login_screen.dart';
+import 'package:astrosarthi_vendor/chat/chat_list.dart';
+import 'package:astrosarthi_vendor/earnings/earnings_screen.dart';
+import 'package:astrosarthi_vendor/settings/settings_screen.dart';
+import 'package:astrosarthi_vendor/support/help_support_screen.dart';
+import 'package:astrosarthi_vendor/utils/app_snackbar.dart';
+import 'package:astrosarthi_vendor/utils/profile_photo_url.dart';
+import 'package:astrosarthi_vendor/widgets/profile_avatar.dart';
+import 'package:astrosarthi_vendor/vastu/vastu_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
@@ -19,11 +22,11 @@ class ProfileScreen extends StatelessWidget {
       source: ImageSource.gallery,
       maxWidth: 1200,
       imageQuality: 85,
-    );
+      );
     if (picked == null) return;
     final ok = await auth.updateProfilePhoto(picked.path);
     if (!ok) {
-      Get.snackbar('Profile', 'Photo upload failed');
+      AppSnackbar.show('Profile', 'Photo upload failed');
     }
   }
 
@@ -34,10 +37,8 @@ class ProfileScreen extends StatelessWidget {
         builder: (auth) => CustomScrollView(
           slivers: [
             SliverAppBar(
-              expandedHeight: 200,
-              pinned: true,
-              backgroundColor: AppColors.primary,
-              automaticallyImplyLeading: false,
+              expandedHeight: 220,
+              pinned: true,              automaticallyImplyLeading: false,
               title: const Text('My Profile'),
               flexibleSpace: FlexibleSpaceBar(
                 background: Container(
@@ -46,60 +47,71 @@ class ProfileScreen extends StatelessWidget {
                       colors: [AppColors.primaryDark, AppColors.primary],
                     ),
                   ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const SizedBox(height: 90),
-                      GestureDetector(
-                        onTap: () => _pickProfilePhoto(auth),
-                        child: Stack(
-                          children: [
-                            ProfileAvatar(
-                              photoUrl: resolveProfilePhotoUrl(
-                                profilePhoto: auth.user?.profilePhoto,
-                                profilePhotoUrl: auth.user?.profilePhotoUrl,
-                              ),
-                              name: auth.user?.name,
-                              size: 88,
-                              borderWidth: 3,
-                              borderColor: Colors.white.withOpacity(0.7),
-                            ),
-                            Positioned(
-                              right: 0,
-                              bottom: 0,
-                              child: Container(
-                                padding: const EdgeInsets.all(6),
-                                decoration: const BoxDecoration(
-                                  color: AppColors.gold,
-                                  shape: BoxShape.circle,
+                  child: SafeArea(
+                    bottom: false,
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 56, 16, 12),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          GestureDetector(
+                            onTap: () => _pickProfilePhoto(auth),
+                            child: Stack(
+                              clipBehavior: Clip.none,
+                              children: [
+                                ProfileAvatar(
+                                  photoUrl: resolveProfilePhotoUrl(
+                                    profilePhoto: auth.user?.profilePhoto,
+                                    profilePhotoUrl: auth.user?.profilePhotoUrl,
+                                  ),
+                                  name: auth.user?.name,
+                                  size: 80,
+                                  borderWidth: 3,
+                                  borderColor: Colors.white.withOpacity(0.7),
                                 ),
-                                child: const Icon(
-                                  Icons.camera_alt,
-                                  size: 16,
-                                  color: Colors.white,
+                                Positioned(
+                                  right: 0,
+                                  bottom: 0,
+                                  child: Container(
+                                    padding: const EdgeInsets.all(6),
+                                    decoration: const BoxDecoration(
+                                      color: AppColors.gold,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(
+                                      Icons.camera_alt,
+                                      size: 16,
+                                      color: Colors.white,
+                                    ),
+                                  ),
                                 ),
-                              ),
+                              ],
                             ),
-                          ],
-                        ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            auth.user?.name ?? 'User',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 17,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            auth.user?.phone ?? '',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: AppColors.primarySurface,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 10),
-                      Text(
-                        auth.user?.name ?? 'User',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Text(
-                        auth.user?.phone ?? '',
-                        style: const TextStyle(
-                          color: AppColors.primarySurface,
-                          fontSize: 13,
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
                 ),
               ),
@@ -142,11 +154,13 @@ class ProfileScreen extends StatelessWidget {
                       'Vastu Requests',
                       () => Get.to(() => const VastuScreen()),
                     ),
-                    _menuItem(Icons.settings_outlined, 'Settings', () {}),
+                    _menuItem(Icons.settings_outlined, 'Settings', () {
+                      Get.to(() => const SettingsScreen());
+                    }),
                     _menuItem(
                       Icons.help_outline_rounded,
                       'Help & Support',
-                      () {},
+                      () => Get.to(() => const HelpSupportScreen()),
                     ),
                     const SizedBox(height: 10),
                     SizedBox(
@@ -181,7 +195,7 @@ class ProfileScreen extends StatelessWidget {
           ],
         ),
       ),
-    );
+      );
   }
 
   Widget _profileCard(List<Widget> children) {
@@ -199,7 +213,7 @@ class ProfileScreen extends StatelessWidget {
         ],
       ),
       child: Column(children: children),
-    );
+      );
   }
 
   Widget _profileItem(IconData icon, String label, String value) {
@@ -228,7 +242,7 @@ class ProfileScreen extends StatelessWidget {
           ),
         ],
       ),
-    );
+      );
   }
 
   Widget _menuItem(IconData icon, String label, VoidCallback onTap) {
@@ -248,6 +262,6 @@ class ProfileScreen extends StatelessWidget {
         onTap: onTap,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
       ),
-    );
+      );
   }
 }

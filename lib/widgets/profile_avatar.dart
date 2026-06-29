@@ -1,5 +1,4 @@
-import 'package:astrosarthi_konnect_astrologer_app/app_theme.dart';
-import 'package:astrosarthi_konnect_astrologer_app/utils/profile_photo_url.dart';
+import 'package:astrosarthi_vendor/utils/profile_photo_url.dart';
 import 'package:flutter/material.dart';
 
 class ProfileAvatar extends StatelessWidget {

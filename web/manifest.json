@@ -1,6 +1,6 @@
 {
-    "name": "astrosarthi_konnect_astrologer_app",
-    "short_name": "astrosarthi_konnect_astrologer_app",
+    "name": "Astrosarathi Konnect Astrologer",
+    "short_name": "Astrosarathi Konnect",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

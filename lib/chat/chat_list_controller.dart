@@ -1,7 +1,7 @@
 // import 'package:flutter/material.dart';
 // import 'package:get/get.dart';
-// import 'package:astrosarthi_konnect_astrologer_app/chat/chat_model.dart';
-// import 'package:astrosarthi_konnect_astrologer_app/servicess/api_service.dart';
+// import 'package:astrosarthi_vendor/chat/chat_model.dart';
+// import 'package:astrosarthi_vendor/servicess/api_service.dart';
 
 // class ChatListController extends GetxController {
 //   List<dynamic> sessions = [];
@@ -80,8 +80,7 @@
 // }
 
 import 'dart:async';
-
-import 'package:astrosarthi_konnect_astrologer_app/authentication/auth_controller.dart';
+import 'package:astrosarthi_vendor/authentication/auth_controller.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -154,18 +153,21 @@ class ChatListController extends GetxController {
 
   void _listenAllAndFilterClientSide(int astroId) {
     _sessionsSub?.cancel();
-    _sessionsSub = _firestore.collection('chat_sessions').snapshots().listen(
-      (snapshot) {
-        sessions = _sortSessions(_mapSessions(snapshot.docs, astroId));
-        isLoading = false;
-        update();
-      },
-      onError: (e) {
-        debugPrint('Stream Error: $e');
-        isLoading = false;
-        update();
-      },
-    );
+    _sessionsSub = _firestore
+        .collection('chat_sessions')
+        .snapshots()
+        .listen(
+          (snapshot) {
+            sessions = _sortSessions(_mapSessions(snapshot.docs, astroId));
+            isLoading = false;
+            update();
+          },
+          onError: (e) {
+            debugPrint('Stream Error: $e');
+            isLoading = false;
+            update();
+          },
+        );
   }
 
   int _updatedAtMillis(Map<String, dynamic> session) {
@@ -176,9 +178,7 @@ class ChatListController extends GetxController {
 
   List<Map<String, dynamic>> _sortSessions(List<Map<String, dynamic>> list) {
     final sorted = List<Map<String, dynamic>>.from(list);
-    sorted.sort(
-      (a, b) => _updatedAtMillis(b).compareTo(_updatedAtMillis(a)),
-    );
+    sorted.sort((a, b) => _updatedAtMillis(b).compareTo(_updatedAtMillis(a)));
     return sorted;
   }
 
@@ -193,11 +193,13 @@ class ChatListController extends GetxController {
           return data;
         })
         .where((s) => !ChatSessionFilter.isAssistantSession(s))
-        .where((s) => ChatSessionFilter.belongsToAstrologer(
-              s,
-              astrologerId: astroId,
-              docId: s['id']?.toString(),
-            ))
+        .where(
+          (s) => ChatSessionFilter.belongsToAstrologer(
+            s,
+            astrologerId: astroId,
+            docId: s['id']?.toString(),
+          ),
+        )
         .toList();
   }
 

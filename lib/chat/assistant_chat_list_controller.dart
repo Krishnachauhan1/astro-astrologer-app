@@ -1,6 +1,5 @@
 import 'dart:async';
-
-import 'package:astrosarthi_konnect_astrologer_app/authentication/auth_controller.dart';
+import 'package:astrosarthi_vendor/authentication/auth_controller.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -56,16 +55,16 @@ class AssistantChatListController extends GetxController {
         .orderBy('updatedAt', descending: true)
         .snapshots()
         .listen(
-      (snap) {
-        sessions = _sortSessions(_mapSessions(snap.docs, astroId));
-        isLoading = false;
-        update();
-      },
-      onError: (e) {
-        debugPrint('Assistant chat list query error: $e');
-        _listenAllAndFilterClientSide(astroId);
-      },
-    );
+          (snap) {
+            sessions = _sortSessions(_mapSessions(snap.docs, astroId));
+            isLoading = false;
+            update();
+          },
+          onError: (e) {
+            debugPrint('Assistant chat list query error: $e');
+            _listenAllAndFilterClientSide(astroId);
+          },
+        );
   }
 
   void _listenAllAndFilterClientSide(int astroId) {
@@ -74,17 +73,17 @@ class AssistantChatListController extends GetxController {
         .collection('assistant_chat_sessions')
         .snapshots()
         .listen(
-      (snap) {
-        sessions = _sortSessions(_mapSessions(snap.docs, astroId));
-        isLoading = false;
-        update();
-      },
-      onError: (e) {
-        debugPrint('Assistant chat list stream error: $e');
-        isLoading = false;
-        update();
-      },
-    );
+          (snap) {
+            sessions = _sortSessions(_mapSessions(snap.docs, astroId));
+            isLoading = false;
+            update();
+          },
+          onError: (e) {
+            debugPrint('Assistant chat list stream error: $e');
+            isLoading = false;
+            update();
+          },
+        );
   }
 
   int _updatedAtMillis(Map<String, dynamic> session) {
@@ -95,9 +94,7 @@ class AssistantChatListController extends GetxController {
 
   List<Map<String, dynamic>> _sortSessions(List<Map<String, dynamic>> list) {
     final sorted = List<Map<String, dynamic>>.from(list);
-    sorted.sort(
-      (a, b) => _updatedAtMillis(b).compareTo(_updatedAtMillis(a)),
-    );
+    sorted.sort((a, b) => _updatedAtMillis(b).compareTo(_updatedAtMillis(a)));
     return sorted;
   }
 
@@ -111,11 +108,13 @@ class AssistantChatListController extends GetxController {
           data['id'] = d.id;
           return data;
         })
-        .where((s) => ChatSessionFilter.belongsToAstrologer(
-              s,
-              astrologerId: astroId,
-              docId: s['id']?.toString(),
-            ))
+        .where(
+          (s) => ChatSessionFilter.belongsToAstrologer(
+            s,
+            astrologerId: astroId,
+            docId: s['id']?.toString(),
+          ),
+        )
         .toList();
   }
 

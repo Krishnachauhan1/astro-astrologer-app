@@ -1,28 +1,21 @@
-import 'package:astrosarthi_konnect_astrologer_app/app_theme.dart';
-import 'package:astrosarthi_konnect_astrologer_app/authentication/auth_controller.dart';
-import 'package:astrosarthi_konnect_astrologer_app/authentication/login_screen.dart';
-import 'package:astrosarthi_konnect_astrologer_app/chat/chat_list.dart';
-import 'package:astrosarthi_konnect_astrologer_app/home/astrologer_status_controller.dart';
-import 'package:astrosarthi_konnect_astrologer_app/home/home_screen.dart';
-import 'package:astrosarthi_konnect_astrologer_app/live_stream/live_controller.dart';
-import 'package:astrosarthi_konnect_astrologer_app/live_stream/live_screen.dart';
-import 'package:astrosarthi_konnect_astrologer_app/notification/notification_service.dart';
-import 'package:astrosarthi_konnect_astrologer_app/profile/profile_screen.dart';
-import 'package:astrosarthi_konnect_astrologer_app/servicess/api_service.dart';
-import 'package:astrosarthi_konnect_astrologer_app/vastu/vastu_controller.dart';
-import 'package:astrosarthi_konnect_astrologer_app/vastu/vastu_screen.dart';
+
+import 'package:astrosarthi_vendor/app_theme.dart';
+import 'package:astrosarthi_vendor/authentication/auth_controller.dart';
+import 'package:astrosarthi_vendor/authentication/login_screen.dart';
+import 'package:astrosarthi_vendor/chat/chat_list.dart';
+import 'package:astrosarthi_vendor/home/home_screen.dart';
+import 'package:astrosarthi_vendor/live_stream/live_controller.dart';
+import 'package:astrosarthi_vendor/live_stream/live_screen.dart';
+import 'package:astrosarthi_vendor/notification/notification_service.dart';
+import 'package:astrosarthi_vendor/profile/profile_screen.dart';
+import 'package:astrosarthi_vendor/servicess/api_service.dart';
+import 'package:astrosarthi_vendor/vastu/vastu_controller.dart';
+import 'package:astrosarthi_vendor/vastu/vastu_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'firebase_options.dart';
-
-Future<void> _requestMicrophonePermission() async {
-  final status = await Permission.microphone.status;
-  if (!status.isGranted) {
-    await Permission.microphone.request();
-  }
-}
 
 class NavController extends GetxController {
   int currentIndex = 0;
@@ -54,7 +47,13 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await ApiService.loadToken();
-  await _requestMicrophonePermission();
+
+  // Get.find<AgoraController>()._initiateCall(); // Call initiation moved here for testing
+  String? token = await FirebaseMessaging.instance.getToken();
+  print("🔥 FCM Token: $token");
+  // await printDeviceInfo();
+
+  print("🔥 FCM Token: $token");
   await NotificationService().initialize();
   runApp(const AstrologyApp());
 }
@@ -70,7 +69,6 @@ class AstrologyApp extends StatelessWidget {
       theme: AppTheme.lightTheme,
       initialBinding: BindingsBuilder(() {
         Get.put(AuthController());
-        Get.put(AstrologerStatusController());
         Get.put(NavController());
         // Get.put(ChatController());
         Get.put(VastuController());

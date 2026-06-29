@@ -1,9 +1,10 @@
 import 'dart:typed_data';
-
-import 'package:astrosarthi_konnect_astrologer_app/servicess/api_service.dart';
+import 'package:astrosarthi_vendor/utils/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:pdfx/pdfx.dart';
+
+import '../servicess/api_service.dart';
 
 Future<void> openVastuAttachment(
   BuildContext context, {
@@ -82,7 +83,8 @@ class _VastuAttachmentLoaderScreenState
       }
 
       final type = widget.attachmentType?.toLowerCase() ?? '';
-      final isPdf = type == 'pdf' ||
+      final isPdf =
+          type == 'pdf' ||
           widget.fileName.toLowerCase().endsWith('.pdf') ||
           _looksLikePdf(bytes);
 
@@ -201,7 +203,7 @@ class _VastuPdfMemoryViewerState extends State<VastuPdfMemoryViewer> {
       setState(() {
         _error = e.toString();
       });
-      Get.snackbar('PDF', 'PDF open nahi ho paya');
+      AppSnackbar.show('PDF', 'PDF open nahi ho paya');
     }
   }
 

@@ -1,7 +1,7 @@
-// import 'package:astrosarthi_konnect_astrologer_app/chat/chat_screen.dart';
+// import 'package:astrosarthi_vendor/chat/chat_screen.dart';
 // import 'package:flutter/material.dart';
 // import 'package:get/get.dart';
-// import 'package:astrosarthi_konnect_astrologer_app/chat/chat_list_controller.dart';
+// import 'package:astrosarthi_vendor/chat/chat_list_controller.dart';
 
 // class ChatList extends StatelessWidget {
 //   const ChatList({super.key});
@@ -70,8 +70,8 @@
 //   }
 // }
 
-import 'package:astrosarthi_konnect_astrologer_app/authentication/auth_controller.dart';
-import 'package:astrosarthi_konnect_astrologer_app/chat/chat_controller.dart';
+import 'package:astrosarthi_vendor/authentication/auth_controller.dart';
+import 'package:astrosarthi_vendor/chat/chat_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'assistant_chat_list_screen.dart';
@@ -92,7 +92,7 @@ class ChatList extends StatelessWidget {
           children: [_ChatSessionsTab(), AssistantChatListScreen()],
         ),
       ),
-    );
+      );
   }
 
   AppBar _buildAppBar() {
@@ -107,7 +107,7 @@ class ChatList extends StatelessWidget {
           Tab(text: 'Assistant Chat'),
         ],
       ),
-    );
+      );
   }
 }
 
@@ -147,7 +147,7 @@ class _ChatSessionsTab extends StatelessWidget {
                 ),
               ],
             ),
-          );
+      );
         }
 
         return ListView.separated(
@@ -237,16 +237,16 @@ class _ChatSessionsTab extends StatelessWidget {
                     initialChatId: session['id'] ?? 'demo_chat',
                     initialUserName: displayUserLabel(session),
                   ),
-                );
+      );
                 Get.to(() => const ChatScreen());
               },
-            );
+      );
           },
-        );
+      );
           },
-        );
+      );
       },
-    );
+      );
   }
 
   Color _getAvatarColor(String name) {

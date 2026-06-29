@@ -1,7 +1,8 @@
-import 'package:astrosarthi_konnect_astrologer_app/app_theme.dart';
-import 'package:astrosarthi_konnect_astrologer_app/authentication/auth_controller.dart';
-import 'package:astrosarthi_konnect_astrologer_app/authentication/register_screen.dart';
-import 'package:astrosarthi_konnect_astrologer_app/main.dart';
+import 'package:astrosarthi_vendor/app_theme.dart';
+import 'package:astrosarthi_vendor/authentication/auth_controller.dart';
+import 'package:astrosarthi_vendor/authentication/register_screen.dart';
+import 'package:astrosarthi_vendor/main.dart';
+import 'package:astrosarthi_vendor/utils/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -58,7 +59,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 16),
                 const Text(
-                  'Astrosarthi konnect',
+                  'Astrosarathi Konnect',
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 28,
@@ -253,12 +254,7 @@ class _LoginScreenState extends State<LoginScreen> {
     if (success) {
       Get.offAll(() => const MainShell());
     } else {
-      Get.snackbar(
-        'Error',
-        'Invalid credentials. Please try again.',
-        backgroundColor: AppColors.busy,
-        colorText: Colors.white,
-      );
+      AppSnackbar.show('Error', 'Invalid credentials. Please try again.');
     }
   }
 }

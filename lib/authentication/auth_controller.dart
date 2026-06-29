@@ -1,6 +1,6 @@
-import 'package:astrosarthi_konnect_astrologer_app/authentication/user_model.dart';
-import 'package:astrosarthi_konnect_astrologer_app/servicess/api_service.dart';
-import 'package:astrosarthi_konnect_astrologer_app/utils/fcm_token_helper.dart';
+import 'package:astrosarthi_vendor/authentication/user_model.dart';
+import 'package:astrosarthi_vendor/servicess/api_service.dart';
+import 'package:astrosarthi_vendor/utils/fcm_token_helper.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
@@ -150,7 +150,7 @@ class AuthController extends GetxController {
         if (data is Map && data['user'] != null) {
           user = UserModel.fromJson(
             Map<String, dynamic>.from(data['user'] as Map),
-          );
+      );
         }
 
         if (isAstrologer && user != null && !user!.isAstrologer) {
@@ -202,7 +202,7 @@ class AuthController extends GetxController {
       if (res['data'] != null) {
         user = UserModel.fromJson(
           Map<String, dynamic>.from(res['data'] as Map),
-        );
+      );
         update();
         return true;
       }

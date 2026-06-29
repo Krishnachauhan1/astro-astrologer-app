@@ -1,5 +1,7 @@
-import 'package:astrosarthi_konnect_astrologer_app/authentication/auth_controller.dart';
-import 'package:astrosarthi_konnect_astrologer_app/authentication/login_screen.dart';
+import 'package:astrosarthi_vendor/authentication/auth_controller.dart';
+import 'package:astrosarthi_vendor/authentication/login_screen.dart';
+import 'package:astrosarthi_vendor/main.dart';
+import 'package:astrosarthi_vendor/utils/app_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -73,7 +75,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           : selectedSpecs.remove(spec);
                     });
                   },
-                );
+      );
               }).toList(),
             ),
 
@@ -97,7 +99,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ],
         ),
       ),
-    );
+      );
   }
 
   Widget _field(
@@ -117,7 +119,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
         ),
       ),
-    );
+      );
   }
 
   Future<void> _submit(AuthController auth) async {
@@ -128,15 +130,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final bio = _bioCtrl.text.trim();
 
     if (name.isEmpty || email.isEmpty || phone.isEmpty || password.isEmpty) {
-      Get.snackbar('Error', 'Name, email, phone and password are required');
+      AppSnackbar.show('Error', 'Name, email, phone and password are required');
       return;
     }
     if (bio.isEmpty) {
-      Get.snackbar('Error', 'Please enter your bio');
+      AppSnackbar.show('Error', 'Please enter your bio');
       return;
     }
     if (selectedSpecs.isEmpty) {
-      Get.snackbar('Error', 'Select at least one specialization');
+      AppSnackbar.show('Error', 'Select at least one specialization');
       return;
     }
 
@@ -146,11 +148,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final experienceYears = int.tryParse(_expCtrl.text.trim());
 
     if (chatRate == null || callRate == null || videoRate == null) {
-      Get.snackbar('Error', 'Enter valid chat, call and video rates');
+      AppSnackbar.show('Error', 'Enter valid chat, call and video rates');
       return;
     }
     if (experienceYears == null || experienceYears < 0) {
-      Get.snackbar('Error', 'Enter valid experience in years');
+      AppSnackbar.show('Error', 'Enter valid experience in years');
       return;
     }
 
@@ -166,13 +168,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
       callRate: callRate,
       videoRate: videoRate,
       experienceYears: experienceYears,
-    );
+      );
 
     if (success) {
-      Get.snackbar('Success', 'Registered successfully');
+      AppSnackbar.show('Success', 'Registered successfully');
       Get.offAll(() => const LoginScreen());
     } else {
-      Get.snackbar(
+      AppSnackbar.show(
         'Error',
         auth.lastRegisterError ?? 'Registration failed',
       );

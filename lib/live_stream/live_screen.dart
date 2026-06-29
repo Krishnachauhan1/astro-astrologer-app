@@ -1,6 +1,6 @@
-import 'package:astrosarthi_konnect_astrologer_app/app_theme.dart';
-import 'package:astrosarthi_konnect_astrologer_app/live_stream/live_controller.dart';
-import 'package:astrosarthi_konnect_astrologer_app/live_stream/host_screen.dart';
+import 'package:astrosarthi_vendor/app_theme.dart';
+import 'package:astrosarthi_vendor/live_stream/host_screen.dart';
+import 'package:astrosarthi_vendor/live_stream/live_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -13,7 +13,10 @@ class LiveScreen extends StatelessWidget {
         title: const Text('End live session?'),
         content: const Text('This will end your live for all viewers.'),
         actions: [
-          TextButton(onPressed: () => Get.back(result: false), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Get.back(result: false),
+            child: const Text('Cancel'),
+          ),
           FilledButton(
             onPressed: () => Get.back(result: true),
             child: const Text('End'),
@@ -56,7 +59,7 @@ class LiveScreen extends StatelessWidget {
             padding: const EdgeInsets.all(18),
             children: [
               if (ctrl.needsRecovery) ...[
-                _WarningCard(
+                const _WarningCard(
                   title: 'Live needs recovery',
                   message:
                       'Your live session was started earlier, but the app restarted. Tap “Resume” to reopen the studio. If it fails, end the live and start again.',
@@ -120,9 +123,9 @@ class LiveScreen extends StatelessWidget {
               const SizedBox(height: 16),
               _GoLiveCard(ctrl: ctrl),
               const SizedBox(height: 14),
-              _InfoCard(
+              const _InfoCard(
                 title: 'Tips',
-                bullets: const [
+                bullets: [
                   'Use good lighting and a stable internet connection',
                   'Start with a clear topic title so users know what to expect',
                   'End the live when you are done to avoid background streaming',
@@ -146,7 +149,10 @@ class _GoLiveCard extends StatelessWidget {
         title: const Text('End live session?'),
         content: const Text('This will end your live for all viewers.'),
         actions: [
-          TextButton(onPressed: () => Get.back(result: false), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Get.back(result: false),
+            child: const Text('Cancel'),
+          ),
           FilledButton(
             onPressed: () => Get.back(result: true),
             child: const Text('End'),
@@ -225,7 +231,7 @@ class _GoLiveCard extends StatelessWidget {
                   Text(
                     '${ctrl.viewerCount} watching',
                     style: TextStyle(
-                        color: AppColors.textPrimary.withValues(alpha: 0.65),
+                      color: AppColors.textPrimary.withValues(alpha: 0.65),
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -276,9 +282,11 @@ class _GoLiveCard extends StatelessWidget {
                                 ? Icons.open_in_new_rounded
                                 : Icons.videocam_rounded,
                           ),
-                    label: Text(ctrl.isLoading
-                        ? 'Please wait…'
-                        : (ctrl.isLive ? 'Resume' : 'Go Live')),
+                    label: Text(
+                      ctrl.isLoading
+                          ? 'Please wait…'
+                          : (ctrl.isLive ? 'Resume' : 'Go Live'),
+                    ),
                     style: FilledButton.styleFrom(
                       backgroundColor: AppColors.primary,
                       foregroundColor: Colors.white,

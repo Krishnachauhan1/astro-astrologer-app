@@ -1,5 +1,5 @@
-import 'package:astrosarthi_konnect_astrologer_app/app_theme.dart';
-import 'package:astrosarthi_konnect_astrologer_app/chat/chat_controller.dart';
+import 'package:astrosarthi_vendor/app_theme.dart';
+import 'package:astrosarthi_vendor/chat/chat_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -144,8 +144,10 @@ class _HostPrivateChatOverlayState extends State<HostPrivateChatOverlay> {
           ),
           IconButton(
             onPressed: widget.onMinimize,
-            icon: const Icon(Icons.keyboard_arrow_down_rounded,
-                color: Colors.white),
+            icon: const Icon(
+              Icons.keyboard_arrow_down_rounded,
+              color: Colors.white,
+            ),
             tooltip: 'Minimize',
           ),
         ],
@@ -198,7 +200,11 @@ class _InputBar extends StatelessWidget {
                 customBorder: const CircleBorder(),
                 child: const Padding(
                   padding: EdgeInsets.all(11),
-                  child: Icon(Icons.send_rounded, color: Colors.white, size: 18),
+                  child: Icon(
+                    Icons.send_rounded,
+                    color: Colors.white,
+                    size: 18,
+                  ),
                 ),
               ),
             ),

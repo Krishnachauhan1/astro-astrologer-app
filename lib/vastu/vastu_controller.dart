@@ -1,5 +1,5 @@
-import 'package:astrosarthi_konnect_astrologer_app/servicess/api_service.dart';
-import 'package:flutter/foundation.dart';
+import 'package:astrosarthi_vendor/servicess/api_service.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class VastuController extends GetxController {

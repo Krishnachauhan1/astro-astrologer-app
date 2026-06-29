@@ -10,7 +10,7 @@
       "client_info": {
         "mobilesdk_app_id": "1:741037305385:android:e137c934d104c6b8e63638",
         "android_client_info": {
-          "package_name": "com.astrosarthi_konnect_astrologer_app"
+          "package_name": "com.astrosarthi.vendor"
         }
       },
       "oauth_client": [],
