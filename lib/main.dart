@@ -3,6 +3,7 @@ import 'package:astrosarthi_vendor/app_theme.dart';
 import 'package:astrosarthi_vendor/authentication/auth_controller.dart';
 import 'package:astrosarthi_vendor/authentication/login_screen.dart';
 import 'package:astrosarthi_vendor/chat/chat_list.dart';
+import 'package:astrosarthi_vendor/home/astrologer_status_controller.dart';
 import 'package:astrosarthi_vendor/home/home_screen.dart';
 import 'package:astrosarthi_vendor/live_stream/live_controller.dart';
 import 'package:astrosarthi_vendor/live_stream/live_screen.dart';
@@ -70,10 +71,10 @@ class AstrologyApp extends StatelessWidget {
       initialBinding: BindingsBuilder(() {
         Get.put(AuthController());
         Get.put(NavController());
+        Get.put(AstrologerStatusController());
         // Get.put(ChatController());
         Get.put(VastuController());
         Get.put(LiveController());
-        Get.put(VastuController());
       }),
       home: GetBuilder<AuthController>(
         builder: (auth) =>

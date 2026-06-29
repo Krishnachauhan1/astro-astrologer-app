@@ -1,4 +1,5 @@
 import 'package:astrosarthi_vendor/authentication/user_model.dart';
+import 'package:astrosarthi_vendor/chat/chat_session_bindings.dart';
 import 'package:astrosarthi_vendor/servicess/api_service.dart';
 import 'package:astrosarthi_vendor/utils/fcm_token_helper.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -31,6 +32,7 @@ class AuthController extends GetxController {
       update();
       await fetchProfile();
       await updateFcmToken();
+      ChatSessionBindings.bindForLoggedInAstrologer();
     }
   }
 
@@ -41,6 +43,7 @@ class AuthController extends GetxController {
       'email': email,
       'password': password,
     });
+    print('Login response: $res');
     isLoading = false;
     if (res['data'] != null && res['data']['token'] != null) {
       if (res['data']['user'] != null) {
@@ -55,6 +58,7 @@ class AuthController extends GetxController {
       isLoggedIn = true;
       update();
       await updateFcmToken();
+      ChatSessionBindings.bindForLoggedInAstrologer();
       return true;
     }
     update();
@@ -113,7 +117,7 @@ class AuthController extends GetxController {
     update();
 
     try {
-      final endpoint = isAstrologer ? '/register-astrologer' : '/register';
+      const endpoint = '/register';
 
       final Map<String, dynamic> body = {
         'name': name,
@@ -148,9 +152,11 @@ class AuthController extends GetxController {
 
       if (res['success'] == true && token != null) {
         if (data is Map && data['user'] != null) {
-          user = UserModel.fromJson(
-            Map<String, dynamic>.from(data['user'] as Map),
-      );
+          final userJson = Map<String, dynamic>.from(data['user'] as Map);
+          if (data['astrologer'] is Map) {
+            userJson['astrologer'] = data['astrologer'];
+          }
+          user = UserModel.fromJson(userJson);
         }
 
         if (isAstrologer && user != null && !user!.isAstrologer) {
@@ -164,6 +170,7 @@ class AuthController extends GetxController {
         isLoggedIn = true;
         update();
         await updateFcmToken();
+        ChatSessionBindings.bindForLoggedInAstrologer();
         return true;
       }
 
@@ -183,10 +190,9 @@ class AuthController extends GetxController {
   Future<void> fetchProfile() async {
     final res = await ApiService.get('/profile');
     if (res['data'] != null) {
-      user = UserModel.fromJson(
-        Map<String, dynamic>.from(res['data'] as Map),
-      );
+      user = UserModel.fromJson(Map<String, dynamic>.from(res['data'] as Map));
       update();
+      ChatSessionBindings.bindForLoggedInAstrologer();
     }
   }
 
@@ -202,7 +208,7 @@ class AuthController extends GetxController {
       if (res['data'] != null) {
         user = UserModel.fromJson(
           Map<String, dynamic>.from(res['data'] as Map),
-      );
+        );
         update();
         return true;
       }
@@ -219,6 +225,7 @@ class AuthController extends GetxController {
     } catch (_) {}
     await ApiService.post('/logout', {});
     await ApiService.clearToken();
+    ChatSessionBindings.clearOnLogout();
     isLoggedIn = false;
     user = null;
     update();

@@ -1,5 +1,6 @@
 import 'package:astrosarthi_vendor/authentication/auth_controller.dart';
 import 'package:astrosarthi_vendor/chat/assistant_chat_list_controller.dart';
+import 'package:astrosarthi_vendor/chat/chat_session_bindings.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -16,12 +17,9 @@ class AssistantChatListScreen extends StatelessWidget {
           return const Center(child: CircularProgressIndicator());
         }
 
-        if (Get.isRegistered<AssistantChatListController>()) {
-          Get.find<AssistantChatListController>().ensureListening();
-        }
+        ChatSessionBindings.bindForLoggedInAstrologer();
 
         return GetBuilder<AssistantChatListController>(
-          init: AssistantChatListController(),
           builder: (controller) {
             if (controller.isLoading) {
               return const Center(child: CircularProgressIndicator());

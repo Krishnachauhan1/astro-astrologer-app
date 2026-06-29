@@ -4,6 +4,7 @@ class UserModel {
   final String email;
   final String phone;
   final String role;
+  final int? astrologerRecordId;
   final String? profilePhoto;
   final String? profilePhotoUrl;
 
@@ -13,19 +14,28 @@ class UserModel {
     required this.email,
     required this.phone,
     this.role = 'user',
+    this.astrologerRecordId,
     this.profilePhoto,
     this.profilePhotoUrl,
   });
 
   bool get isAstrologer => role == 'astrologer';
 
-  factory UserModel.fromJson(Map<String, dynamic> json) => UserModel(
-    id: json['id'] ?? 0,
-    name: json['name'] ?? '',
-    email: json['email'] ?? '',
-    phone: json['phone'] ?? '',
-    role: json['role']?.toString() ?? 'user',
-    profilePhoto: json['profile_photo']?.toString(),
-    profilePhotoUrl: json['profile_photo_url']?.toString(),
-      );
+  factory UserModel.fromJson(Map<String, dynamic> json) {
+    final astrologer = json['astrologer'];
+  final recordFromNested = astrologer is Map
+      ? astrologer['id']
+      : null;
+
+    return UserModel(
+      id: json['id'] ?? 0,
+      name: json['name'] ?? '',
+      email: json['email'] ?? '',
+      phone: json['phone'] ?? '',
+      role: json['role']?.toString() ?? 'user',
+      astrologerRecordId: json['astrologer_id'] ?? recordFromNested,
+      profilePhoto: json['profile_photo']?.toString(),
+      profilePhotoUrl: json['profile_photo_url']?.toString(),
+    );
+  }
 }

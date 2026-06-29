@@ -1,9 +1,9 @@
 import 'dart:async';
-import 'package:astrosarthi_vendor/authentication/auth_controller.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../utils/astrologer_identity.dart';
 import 'chat_session_filter.dart';
 
 class ChatController extends GetxController {
@@ -89,10 +89,8 @@ class ChatController extends GetxController {
     });
   }
 
-  int? _loggedInAstrologerId() {
-    if (!Get.isRegistered<AuthController>()) return null;
-    return ChatSessionFilter.parseId(Get.find<AuthController>().user?.id);
-  }
+  int? _loggedInAstrologerId() =>
+      AstrologerIdentity.userId ?? AstrologerIdentity.recordId;
 
   Future<void> _loadSessionMeta() async {
     try {
