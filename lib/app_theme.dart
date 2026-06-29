@@ -58,6 +58,19 @@ class AppTheme {
         elevation: 16,
         type: BottomNavigationBarType.fixed,
       ),
-    );
+      snackBarTheme: SnackBarThemeData(
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: AppColors.primaryDark,
+        contentTextStyle: const TextStyle(
+          color: Colors.white,
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(12)),
+        ),
+        actionTextColor: AppColors.goldLight,
+      ),
+      );
   }
 }

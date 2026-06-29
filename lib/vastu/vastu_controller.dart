@@ -1,4 +1,5 @@
 import 'package:astrosarthi_vendor/servicess/api_service.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class VastuController extends GetxController {
@@ -35,12 +36,16 @@ class VastuController extends GetxController {
     update();
   }
 
-  Future<void> getVastuRequest()async{
-    final res= await ApiService.get('/vastu');
-    if(res['success']){
-      vastuRequests=res['data'];
+  Future<void> getVastuRequest() async {
+    try {
+      final res = await ApiService.get('/vastu/astrologer/requests');
+      if (res['success'] == true && res['data'] is List) {
+        vastuRequests = List.from(res['data'] as List);
+      }
+    } catch (e) {
+      debugPrint('getVastuRequest error: $e');
+    } finally {
       update();
     }
-
   }
 }

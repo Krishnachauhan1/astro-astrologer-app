@@ -8,7 +8,6 @@ class ChatScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GetBuilder<ChatController>(
-      // init: ChatCon  tag: Get.arguments?['chatId'],troller(),
       builder: (ctrl) {
         return Scaffold(
           appBar: AppBar(
@@ -17,9 +16,7 @@ class ChatScreen extends StatelessWidget {
                 CircleAvatar(
                   backgroundColor: Colors.white24,
                   child: Text(
-                    ctrl.userName.isNotEmpty
-                        ? ctrl.userName[0].toUpperCase()
-                        : 'U',
+                    ctrl.userName.isNotEmpty ? ctrl.userName[0].toUpperCase() : 'U',
                     style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
@@ -27,7 +24,44 @@ class ChatScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 10),
-                Text(ctrl.userName, style: const TextStyle(fontSize: 16)),
+                Expanded(
+                  child: Text(
+                    ctrl.userName,
+                    style: const TextStyle(fontSize: 16),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                if (ctrl.showSessionTimer)
+                  Container(
+                    margin: const EdgeInsets.only(left: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.timer_outlined,
+                          color: Colors.white,
+                          size: 14,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          ctrl.countdownLabel,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
               ],
             ),
           ),
@@ -37,7 +71,7 @@ class ChatScreen extends StatelessWidget {
                 child: ctrl.messages.isEmpty
                     ? const Center(
                         child: Text(
-                          'No messages yet. Reply to the user 🙏',
+                          'No messages yet. Reply to the user.',
                           style: TextStyle(color: Colors.grey),
                         ),
                       )
@@ -47,18 +81,31 @@ class ChatScreen extends StatelessWidget {
                         itemBuilder: (_, i) => _MessageBubble(ctrl.messages[i]),
                       ),
               ),
-              _InputBar(ctrl: ctrl),
+              _InputBar(
+                controller: ctrl.msgController,
+                onSend: ctrl.sendMessage,
+                hintText: 'Type your response...',
+                sendColor: Colors.deepPurple,
+              ),
             ],
           ),
-        );
+      );
       },
-    );
+      );
   }
 }
 
 class _InputBar extends StatelessWidget {
-  final ChatController ctrl;
-  const _InputBar({required this.ctrl});
+  final TextEditingController controller;
+  final Future<void> Function() onSend;
+  final String hintText;
+  final Color sendColor;
+  const _InputBar({
+    required this.controller,
+    required this.onSend,
+    required this.hintText,
+    required this.sendColor,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -78,10 +125,10 @@ class _InputBar extends StatelessWidget {
         children: [
           Expanded(
             child: TextField(
-              controller: ctrl.msgController,
+              controller: controller,
               style: const TextStyle(fontSize: 14),
               decoration: InputDecoration(
-                hintText: 'Type your response...',
+                hintText: hintText,
                 filled: true,
                 fillColor: Colors.grey.shade100,
                 border: OutlineInputBorder(
@@ -97,12 +144,12 @@ class _InputBar extends StatelessWidget {
           ),
           const SizedBox(width: 10),
           GestureDetector(
-            onTap: ctrl.sendMessage,
+            onTap: onSend,
             child: Container(
               width: 46,
               height: 46,
-              decoration: const BoxDecoration(
-                color: Colors.deepPurple,
+              decoration: BoxDecoration(
+                color: sendColor,
                 shape: BoxShape.circle,
               ),
               child: const Icon(
@@ -114,7 +161,7 @@ class _InputBar extends StatelessWidget {
           ),
         ],
       ),
-    );
+      );
   }
 }
 
@@ -151,6 +198,6 @@ class _MessageBubble extends StatelessWidget {
           ),
         ),
       ),
-    );
+      );
   }
 }

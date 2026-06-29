@@ -13,6 +13,13 @@ class AudioCallScreen extends StatefulWidget {
 class _AudioCallScreenState extends State<AudioCallScreen> {
   late final Map<String, dynamic> args;
 
+  DateTime? _parseExpiresAt(Map<String, dynamic> data) {
+    final raw = data['sessionExpiresAt'] ??
+        data['session_expires_at'] ??
+        data['expires_at'];
+    return raw != null ? DateTime.tryParse(raw.toString())?.toLocal() : null;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -23,10 +30,12 @@ class _AudioCallScreenState extends State<AudioCallScreen> {
     Get.put(
       AgoraController(
         isVideoCall: false,
-        astrologerName: args['astrologerName'] ?? args['caller_name'] ?? '',
+        astrologerName: 'User',
         callData: args,
+        sessionExpiresAt: _parseExpiresAt(args),
+        sessionMinutes: int.tryParse('${args['session_minutes'] ?? args['duration_minutes'] ?? args['minutes']}') ?? 5,
       ),
-    );
+      );
     print("ARGS ====== $args");
   }
 
@@ -70,7 +79,7 @@ class _AudioCallScreenState extends State<AudioCallScreen> {
                   ],
                 ),
               ),
-            );
+      );
           }
           if (ctrl.errorMessage.isNotEmpty) {
             print("ERROR MESSAGE ====== ${ctrl.errorMessage}");
@@ -115,7 +124,7 @@ class _AudioCallScreenState extends State<AudioCallScreen> {
                   ),
                 ),
               ),
-            );
+      );
           }
           return Container(
             width: double.infinity,
@@ -204,7 +213,9 @@ class _AudioCallScreenState extends State<AudioCallScreen> {
                         ),
                         const SizedBox(width: 6),
                         Text(
-                          ctrl.remoteJoined ? ctrl.formattedTime : '00:00',
+                          ctrl.sessionExpiresAt != null || ctrl.remoteJoined
+                              ? ctrl.formattedTime
+                              : '00:00',
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 13,
@@ -300,10 +311,10 @@ class _AudioCallScreenState extends State<AudioCallScreen> {
                 ],
               ),
             ),
-          );
+      );
         },
       ),
-    );
+      );
   }
 }
 
@@ -334,7 +345,7 @@ class _AstrologerAvatar extends StatelessWidget {
               )
             : _initials(),
       ),
-    );
+      );
   }
 
   Widget _initials() {
@@ -350,7 +361,7 @@ class _AstrologerAvatar extends StatelessWidget {
           fontWeight: FontWeight.w800,
         ),
       ),
-    );
+      );
   }
 }
 
@@ -399,6 +410,6 @@ class _AudioControl extends StatelessWidget {
           ),
         ],
       ),
-    );
+      );
   }
 }

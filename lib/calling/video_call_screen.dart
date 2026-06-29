@@ -14,6 +14,13 @@ class VideoCallScreen extends StatefulWidget {
 class _VideoCallScreenState extends State<VideoCallScreen> {
   late final Map<String, dynamic> args;
 
+  DateTime? _parseExpiresAt(Map<String, dynamic> data) {
+    final raw = data['sessionExpiresAt'] ??
+        data['session_expires_at'] ??
+        data['expires_at'];
+    return raw != null ? DateTime.tryParse(raw.toString())?.toLocal() : null;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -24,10 +31,12 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
     Get.put(
       AgoraController(
         isVideoCall: true,
-        astrologerName: args['astrologerName'] ?? args['caller_name'] ?? '',
+        astrologerName: 'User',
         callData: args,
+        sessionExpiresAt: _parseExpiresAt(args),
+        sessionMinutes: int.tryParse('${args['session_minutes'] ?? args['duration_minutes'] ?? args['minutes']}') ?? 5,
       ),
-    );
+      );
   }
 
   @override
@@ -69,7 +78,7 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
                   ],
                 ),
               ),
-            );
+      );
           }
           if (ctrl.errorMessage.isNotEmpty) {
             return Container(
@@ -109,7 +118,7 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
                   ),
                 ),
               ),
-            );
+      );
           }
           return Stack(
             children: [
@@ -235,7 +244,7 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
                               ),
                             ),
                             Text(
-                              ctrl.remoteJoined
+                              ctrl.sessionExpiresAt != null || ctrl.remoteJoined
                                   ? ctrl.formattedTime
                                   : 'Connecting...',
                               style: const TextStyle(
@@ -373,10 +382,10 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
                 ),
               ),
             ],
-          );
+      );
         },
       ),
-    );
+      );
   }
 }
 
@@ -404,7 +413,7 @@ class _AstrologerAvatar extends StatelessWidget {
               )
             : _initials(name),
       ),
-    );
+      );
   }
 
   Widget _initials(String name) {
@@ -420,7 +429,7 @@ class _AstrologerAvatar extends StatelessWidget {
           fontWeight: FontWeight.w800,
         ),
       ),
-    );
+      );
   }
 }
 
@@ -470,6 +479,6 @@ class _CallControl extends StatelessWidget {
           ),
         ],
       ),
-    );
+      );
   }
 }

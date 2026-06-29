@@ -1,6 +1,5 @@
 import 'package:astrosarthi_vendor/app_theme.dart';
 import 'package:astrosarthi_vendor/live_stream/live_controller.dart';
-import 'package:astrosarthi_vendor/live_stream/live_stream_model.dart';
 import 'package:astrosarthi_vendor/servicess/api_service.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';

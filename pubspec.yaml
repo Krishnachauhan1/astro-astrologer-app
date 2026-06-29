@@ -24,6 +24,8 @@ dependencies:
   cloud_firestore: ^6.2.0
   firebase_analytics: ^12.3.0
   device_info_plus: ^13.1.0
+  pdfx: ^2.9.2
+  image_picker: ^1.2.1
 
 dev_dependencies:
   flutter_test:

@@ -1,13 +1,22 @@
 import 'dart:async';
 import 'package:astrosarthi_vendor/calling/audio_call_screen.dart';
 import 'package:astrosarthi_vendor/calling/video_call_screen.dart';
+import 'package:astrosarthi_vendor/live_stream/live_controller.dart';
+import 'package:astrosarthi_vendor/live_stream/live_host_chat_bridge.dart';
+import 'package:astrosarthi_vendor/utils/app_snackbar.dart';
+import 'package:astrosarthi_vendor/utils/fcm_token_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:get/get_core/src/get_main.dart';
+import 'package:get/get_instance/src/extension_instance.dart';
 import 'package:get/get_navigation/src/extension_navigation.dart';
+import 'package:get/get_navigation/src/snackbar/snackbar.dart';
 
+import '../notification/astrologer_notification_controller.dart';
 import '../servicess/api_service.dart';
+import '../utils/call_session_api.dart';
+import '../utils/session_request_api.dart';
 
 class NotificationService {
   final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
@@ -27,12 +36,7 @@ class NotificationService {
       callType = 'audio';
     }
 
-    final callerName =
-        data['caller_name'] ??
-        data['callerName'] ??
-        data['astrologerName'] ??
-        data['title'] ??
-        'Unknown Caller';
+    final callerName = 'User';
 
     // Backend sends `caller_uid` (the customer's user id) for the astrologer
     // to know who is calling. The astrologer side joins Agora with its OWN
@@ -69,72 +73,73 @@ class NotificationService {
   }
 
   Future<void> initialize() async {
-    // 🔐 Permission
-    await _firebaseMessaging.requestPermission();
-
-    // 📲 TOKEN
-    String? token = await _firebaseMessaging.getToken();
-    print("🔥 FCM TOKEN: $token");
+    final String? token = await resolveFcmToken();
+    debugPrint('🔥 FCM TOKEN: $token');
     if (token != null) {
       try {
         final res = await ApiService.post('/user/update-fcm-token', {
           "fcm_token": token,
         });
-        print("✅ FCM token updated: $res");
+        debugPrint('✅ FCM token updated: $res');
       } catch (e) {
-        print("❌ FCM update error: $e");
+        debugPrint('❌ FCM update error: $e');
       }
-
-      // 🔄 Token refresh (IMPORTANT)
-      FirebaseMessaging.instance.onTokenRefresh.listen((newToken) {
-        print("🔄 NEW TOKEN: $newToken");
-        // 👉 Backend API call karke save karo
-      });
-
-      // 🔔 Local notification init
-      const AndroidInitializationSettings androidInit =
-          AndroidInitializationSettings('@mipmap/ic_launcher');
-
-      const InitializationSettings settings = InitializationSettings(
-        android: androidInit,
-      );
-
-      await _localNotifications.initialize(settings);
-
-      // 📩 FOREGROUND MESSAGE
-      FirebaseMessaging.onMessage.listen((message) {
-
-        final data = _normalizeCallData(message.data);
-        if (_isCallMessage(data)) {
-          showIncomingCallPopup(data, data['callType'].toString());
-        }
-      });
-
-      FirebaseMessaging.onMessageOpenedApp.listen((message) {
-        final data = _normalizeCallData(message.data);
-        if (_isCallMessage(data)) {
-          _openCallScreen(data);
-        }
-      });
-
-      final initialMessage = await FirebaseMessaging.instance
-          .getInitialMessage();
-      if (initialMessage != null) {
-        final data = _normalizeCallData(initialMessage.data);
-        if (_isCallMessage(data)) {
-          Future.delayed(const Duration(seconds: 1), () {
-            _openCallScreen(data);
-          });
-        }
-      }
-
-      // ⚠️ iOS support
-      await _firebaseMessaging.setForegroundNotificationPresentationOptions(
-        alert: true,
-        badge: true,
-        sound: true,
-      );
     }
+
+    FirebaseMessaging.instance.onTokenRefresh.listen((newToken) async {
+      if (!ApiService.isLoggedIn) return;
+      try {
+        await ApiService.post('/user/update-fcm-token', {"fcm_token": newToken});
+      } catch (e) {
+        debugPrint('FCM refresh update error: $e');
+      }
+    });
+
+    const AndroidInitializationSettings androidInit =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
+
+    const InitializationSettings settings = InitializationSettings(
+      android: androidInit,
+      );
+
+    await _localNotifications.initialize(settings);
+
+    FirebaseMessaging.onMessage.listen((message) {
+      final data = _normalizeCallData(message.data);
+      _refreshNotificationList();
+      final type = (data['type'] ?? '').toString().toLowerCase();
+      if (type.contains('chat') && !type.contains('accepted')) {
+        _showChatRequestBanner(data);
+        return;
+      }
+      if (_isCallMessage(data)) {
+        if (_routeVideoToLiveHost(data)) return;
+        showIncomingCallPopup(data, data['callType'].toString());
+      }
+    });
+
+    FirebaseMessaging.onMessageOpenedApp.listen((message) {
+      final data = _normalizeCallData(message.data);
+      if (_isCallMessage(data)) {
+        _openCallScreen(data);
+      }
+    });
+
+    final initialMessage = await FirebaseMessaging.instance.getInitialMessage();
+    if (initialMessage != null) {
+      final data = _normalizeCallData(initialMessage.data);
+      if (_isCallMessage(data)) {
+        Future.delayed(const Duration(seconds: 1), () {
+          _openCallScreen(data);
+        });
+      }
+    }
+
+    await _firebaseMessaging.setForegroundNotificationPresentationOptions(
+      alert: true,
+      badge: true,
+      sound: true,
+      );
 
     // 🔔 SHOW LOCAL NOTIFICATION
     // ignore: unused_element
@@ -147,7 +152,7 @@ class NotificationService {
             importance: Importance.max,
             priority: Priority.high,
             playSound: true,
-          );
+      );
 
       const NotificationDetails details = NotificationDetails(
         android: androidDetails,
@@ -162,6 +167,47 @@ class NotificationService {
     }
   }
 
+  void _refreshNotificationList() {
+    if (Get.isRegistered<AstrologerNotificationController>()) {
+      Get.find<AstrologerNotificationController>().fetchNotifications();
+    }
+  }
+
+  void _showChatRequestBanner(Map<String, dynamic> data) {
+    if (_routeChatToLiveHost(data)) return;
+
+    AppSnackbar.show(
+      'Chat request',
+      data['caller_name']?.toString() ?? 'A user wants to chat',
+      snackPosition: SnackPosition.TOP,
+      duration: const Duration(seconds: 4),
+      mainButton: TextButton(
+        onPressed: () async {
+          Get.closeCurrentSnackbar();
+          final sessionId = parseCallSessionId(data);
+          if (sessionId != null) {
+            await SessionRequestApi.acceptSession(sessionId, isChat: true);
+          }
+          await SessionRequestApi.openSessionFromNotification(data);
+        },
+        child: const Text('View', style: TextStyle(color: Colors.white)),
+      ),
+      );
+  }
+
+  bool _routeChatToLiveHost(Map<String, dynamic> data) {
+    if (!Get.isRegistered<LiveController>()) return false;
+    final live = Get.find<LiveController>();
+    if (!live.isHostingLive) return false;
+
+    if (LiveHostChatBridge.onIncomingChatWhileLive != null) {
+      LiveHostChatBridge.onIncomingChatWhileLive!(data);
+      return true;
+    }
+    live.setPendingChatRequest(data);
+    return true;
+  }
+
   bool _isCallMessage(Map<String, dynamic> data) {
     final type = (data['type'] ?? '').toString();
     return type == 'incoming_call' ||
@@ -171,7 +217,62 @@ class NotificationService {
         (data['agora_app_id'] != null && data['channel'] != null);
   }
 
+  bool _routeVideoToLiveHost(Map<String, dynamic> data) {
+    final callType = (data['callType'] ?? data['call_type'] ?? '')
+        .toString()
+        .toLowerCase();
+    if (!callType.contains('video')) return false;
+
+    if (!Get.isRegistered<LiveController>()) return false;
+    final live = Get.find<LiveController>();
+    if (!live.isHostingLive) return false;
+
+    if (LiveHostChatBridge.onIncomingVideoWhileLive != null) {
+      LiveHostChatBridge.onIncomingVideoWhileLive!(data);
+      return true;
+    }
+    live.setPendingVideoCallRequest(data);
+    return true;
+  }
+
+  Future<void> _acceptCall(Map<String, dynamic> data) async {
+    var merged = Map<String, dynamic>.from(data);
+    final sessionId = parseCallSessionId(data);
+    if (sessionId != null) {
+      try {
+        final res = await ApiService.post('/$sessionId/accept', {});
+        if (res['success'] == true && res['data'] is Map) {
+          merged = {
+            ...merged,
+            ...Map<String, dynamic>.from(res['data'] as Map),
+          };
+        }
+      } catch (_) {
+        await acceptCallSession(sessionId);
+      }
+    }
+    if (LiveHostChatBridge.tryOpenVideoOnLiveHost?.call(merged) == true) {
+      if (Get.isDialogOpen == true) Get.back();
+      return;
+    }
+    _openCallScreen(merged);
+  }
+
+  Future<void> _rejectCall(Map<String, dynamic> data) async {
+    final sessionId = parseCallSessionId(data);
+    if (sessionId != null) {
+      await rejectCallSession(sessionId);
+    }
+    if (Get.isDialogOpen == true) {
+      Get.back();
+    }
+  }
+
   void _openCallScreen(Map<String, dynamic> data) {
+    if (data['callType'] == 'video' &&
+        LiveHostChatBridge.tryOpenVideoOnLiveHost?.call(data) == true) {
+      return;
+    }
     if (data['callType'] == 'video') {
       Get.to(() => const VideoCallScreen(), arguments: data);
     } else {
@@ -182,9 +283,7 @@ class NotificationService {
   void showIncomingCallUI(Map<String, dynamic> data) {
     Get.dialog(
       Dialog(
-        insetPadding: EdgeInsets.zero,
-        backgroundColor: Colors.black,
-        child: Container(
+        insetPadding: EdgeInsets.zero,        child: Container(
           width: double.infinity,
           height: double.infinity,
           padding: EdgeInsets.all(20),
@@ -211,12 +310,8 @@ class NotificationService {
                 children: [
                   // ❌ Reject
                   GestureDetector(
-                    onTap: () {
-                      Get.back();
-                    },
-                    child: CircleAvatar(
-                      backgroundColor: Colors.red,
-                      radius: 30,
+                    onTap: () => _rejectCall(data),
+                    child: CircleAvatar(                      radius: 30,
                       child: Icon(Icons.call_end, color: Colors.white),
                     ),
                   ),
@@ -225,21 +320,9 @@ class NotificationService {
                   GestureDetector(
                     onTap: () {
                       Get.back();
-                      if (data['callType'] == 'video') {
-                        Get.to(
-                          () => const VideoCallScreen(),
-                          arguments: data,
-                        );
-                      } else {
-                        Get.to(
-                          () => const AudioCallScreen(),
-                          arguments: data,
-                        );
-                      }
+                      _acceptCall(data);
                     },
-                    child: CircleAvatar(
-                      backgroundColor: Colors.green,
-                      radius: 30,
+                    child: CircleAvatar(                      radius: 30,
                       child: Icon(Icons.call, color: Colors.white),
                     ),
                   ),
@@ -250,7 +333,7 @@ class NotificationService {
         ),
       ),
       barrierDismissible: false,
-    );
+      );
   }
 
   void showIncomingCallPopup(Map<String, dynamic> data, String callType) {
@@ -268,8 +351,6 @@ class NotificationService {
           canPop: false,
 
           child: Scaffold(
-            backgroundColor: Colors.black.withOpacity(0.92),
-
             body: SafeArea(
               child: Container(
                 width: double.infinity,
@@ -351,9 +432,7 @@ class NotificationService {
                           icon: Icons.call_end,
                           color: Colors.red,
                           label: "Decline",
-                          onTap: () {
-                            Get.back();
-                          },
+                          onTap: () => _rejectCall(data),
                         ),
 
                         /// ACCEPT
@@ -363,11 +442,7 @@ class NotificationService {
                           label: "Accept",
                           onTap: () {
                             Get.back();
-
-                            Get.to(
-                              () => const VideoCallScreen(),
-                              arguments: data,
-                            );
+                            _acceptCall(data);
                           },
                         ),
                       ],
@@ -472,9 +547,7 @@ class NotificationService {
 
                         /// DECLINE
                         GestureDetector(
-                          onTap: () {
-                            Get.back();
-                          },
+                          onTap: () => _rejectCall(data),
 
                           child: Container(
                             padding: const EdgeInsets.all(12),
@@ -497,11 +570,7 @@ class NotificationService {
                         GestureDetector(
                           onTap: () {
                             Get.back();
-
-                            Get.to(
-                              () => const AudioCallScreen(),
-                              arguments: data,
-                            );
+                            _acceptCall(data);
                           },
 
                           child: Container(
@@ -520,7 +589,7 @@ class NotificationService {
                   ),
                 ),
               ),
-            );
+      );
           },
 
           transitionBuilder: (_, animation, __, child) {
@@ -534,9 +603,9 @@ class NotificationService {
                   ),
 
               child: FadeTransition(opacity: animation, child: child),
-            );
+      );
           },
-        );
+      );
       });
     }
   }
@@ -583,6 +652,6 @@ class NotificationService {
           style: const TextStyle(color: Colors.white70, fontSize: 15),
         ),
       ],
-    );
+      );
   }
 }

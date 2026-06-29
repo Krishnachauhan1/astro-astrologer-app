@@ -1,12 +1,15 @@
 import 'package:astrosarthi_vendor/authentication/user_model.dart';
 import 'package:astrosarthi_vendor/servicess/api_service.dart';
+import 'package:astrosarthi_vendor/utils/fcm_token_helper.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 
 class AuthController extends GetxController {
   bool isLoggedIn = false;
   bool isLoading = false;
   UserModel? user;
+  String? lastRegisterError;
 
   @override
   void onInit() {
@@ -40,10 +43,15 @@ class AuthController extends GetxController {
     });
     isLoading = false;
     if (res['data'] != null && res['data']['token'] != null) {
-      await ApiService.saveToken(res['data']['token']);
       if (res['data']['user'] != null) {
         user = UserModel.fromJson(res['data']['user']);
       }
+      if (user != null && !user!.isAstrologer) {
+        isLoading = false;
+        update();
+        return false;
+      }
+      await ApiService.saveToken(res['data']['token']);
       isLoggedIn = true;
       update();
       await updateFcmToken();
@@ -55,22 +63,36 @@ class AuthController extends GetxController {
 
   String? _lastSentToken;
   Future<void> updateFcmToken() async {
+    final token = await resolveFcmToken();
+    if (token == null || token == _lastSentToken) return;
     try {
-      String? token = await FirebaseMessaging.instance.getToken();
-      if (token == null) {
-        await Future.delayed(const Duration(seconds: 2));
-        token = await FirebaseMessaging.instance.getToken();
-      }
-      if (token != null && token != _lastSentToken) {
-        final res = await ApiService.post('/user/update-fcm-token', {
-          "fcm_token": token,
-        });
-        _lastSentToken = token;
-        print("FCM token updated: $res");
-      }
+      final res = await ApiService.post('/user/update-fcm-token', {
+        "fcm_token": token,
+      });
+      _lastSentToken = token;
+      debugPrint('FCM token updated: $res');
     } catch (e) {
-      print("FCM update error: $e");
+      debugPrint('FCM update error: $e');
     }
+  }
+
+  static String? _messageFromApi(Map<String, dynamic> res) {
+    final message = res['message'];
+    if (message is String && message.isNotEmpty) return message;
+
+    final errors = res['errors'];
+    if (errors is Map) {
+      for (final entry in errors.entries) {
+        final v = entry.value;
+        if (v is List && v.isNotEmpty) return v.first.toString();
+        if (v != null) return v.toString();
+      }
+    }
+
+    final error = res['error'];
+    if (error is String && error.isNotEmpty) return error;
+
+    return null;
   }
 
   Future<bool> register({
@@ -78,56 +100,82 @@ class AuthController extends GetxController {
     required String email,
     required String phone,
     required String password,
-    bool isAstrologer = false,
+    bool isAstrologer = true,
+    String? bio,
+    List<String>? specializations,
+    int? chatRate,
+    int? callRate,
+    int? videoRate,
+    int? experienceYears,
   }) async {
     isLoading = true;
+    lastRegisterError = null;
     update();
 
     try {
       final endpoint = isAstrologer ? '/register-astrologer' : '/register';
 
-      // ✅ IMPORTANT: dynamic use karo
       final Map<String, dynamic> body = {
         'name': name,
         'email': email,
         'phone': phone,
         'password': password,
         'password_confirmation': password,
-        'bio': 'New astrologer',
-        'specializations': ['Vedic', 'Tarot'], // ✅ array
-        'chat_rate': 10, // ✅ int
-        'call_rate': 20,
-        'video_rate': 30,
-        'experience_years': 1,
       };
 
+      if (isAstrologer) {
+        body['bio'] = bio?.trim().isNotEmpty == true ? bio!.trim() : null;
+        body['specializations'] =
+            (specializations != null && specializations.isNotEmpty)
+            ? specializations
+            : null;
+        body['chat_rate'] = chatRate;
+        body['call_rate'] = callRate;
+        body['video_rate'] = videoRate;
+        body['experience_years'] = experienceYears;
+        body.removeWhere((_, v) => v == null);
+      }
+
       final res = await ApiService.post(endpoint, body);
-      print(res);
+      if (kDebugMode) {
+        debugPrint('Register body: $body');
+        debugPrint('Register response: $res');
+      }
       isLoading = false;
 
-      // ✅ Success check
+      final data = res['data'];
+      final token = data is Map ? data['token'] : null;
 
-      if (res['data'] != null && res['data']['token'] != null) {
-        // Save token
-        await ApiService.saveToken(res['data']['token']);
-
-        // Save user
-        if (res['data']['user'] != null) {
-          user = UserModel.fromJson(res['data']['user']);
+      if (res['success'] == true && token != null) {
+        if (data is Map && data['user'] != null) {
+          user = UserModel.fromJson(
+            Map<String, dynamic>.from(data['user'] as Map),
+      );
         }
 
+        if (isAstrologer && user != null && !user!.isAstrologer) {
+          lastRegisterError =
+              'Account created as user, not astrologer. Contact support.';
+          update();
+          return false;
+        }
+
+        await ApiService.saveToken(token.toString());
         isLoggedIn = true;
         update();
         await updateFcmToken();
         return true;
       }
 
+      lastRegisterError =
+          _messageFromApi(res) ?? 'Registration failed. Please try again.';
       update();
       return false;
     } catch (e) {
       isLoading = false;
+      lastRegisterError = 'Registration failed. Please try again.';
       update();
-      print("Register Error: $e");
+      debugPrint('Register Error: $e');
       return false;
     }
   }
@@ -135,7 +183,32 @@ class AuthController extends GetxController {
   Future<void> fetchProfile() async {
     final res = await ApiService.get('/profile');
     if (res['data'] != null) {
-      user = UserModel.fromJson(res['data']);
+      user = UserModel.fromJson(
+        Map<String, dynamic>.from(res['data'] as Map),
+      );
+      update();
+    }
+  }
+
+  Future<bool> updateProfilePhoto(String filePath) async {
+    isLoading = true;
+    update();
+    try {
+      final res = await ApiService.postMultipart(
+        '/profile',
+        filePath: filePath,
+        fileField: 'profile_photo',
+      );
+      if (res['data'] != null) {
+        user = UserModel.fromJson(
+          Map<String, dynamic>.from(res['data'] as Map),
+      );
+        update();
+        return true;
+      }
+      return false;
+    } finally {
+      isLoading = false;
       update();
     }
   }

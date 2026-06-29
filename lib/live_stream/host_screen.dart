@@ -9,7 +9,7 @@ class HostScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ctrl = Get.find<LiveController>();
+    Get.find<LiveController>();
 
     return Scaffold(
       backgroundColor: Colors.black,

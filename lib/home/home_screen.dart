@@ -1,8 +1,12 @@
 import 'package:astrosarthi_vendor/app_theme.dart';
 import 'package:astrosarthi_vendor/authentication/auth_controller.dart';
-import 'package:astrosarthi_vendor/live_stream/live_controller.dart';
+import 'package:astrosarthi_vendor/home/astrologer_status_controller.dart';
 import 'package:astrosarthi_vendor/main.dart';
+import 'package:astrosarthi_vendor/notification/astrologer_notification_screen.dart';
+import 'package:astrosarthi_vendor/utils/app_snackbar.dart';
+import 'package:astrosarthi_vendor/utils/profile_photo_url.dart';
 import 'package:astrosarthi_vendor/vastu/vastu_screen.dart';
+import 'package:astrosarthi_vendor/widgets/profile_avatar.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -17,9 +21,7 @@ class HomeScreen extends StatelessWidget {
           SliverAppBar(
             expandedHeight: 180,
             floating: false,
-            pinned: true,
-            backgroundColor: AppColors.primary,
-            flexibleSpace: FlexibleSpaceBar(
+            pinned: true,            flexibleSpace: FlexibleSpaceBar(
               background: Container(
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
@@ -38,18 +40,38 @@ class HomeScreen extends StatelessWidget {
                         children: [
                           Row(
                             children: [
-                              const Icon(
-                                Icons.auto_awesome,
-                                color: AppColors.gold,
-                                size: 20,
+                              ProfileAvatar(
+                                photoUrl: resolveProfilePhotoUrl(
+                                  profilePhoto: auth.user?.profilePhoto,
+                                  profilePhotoUrl: auth.user?.profilePhotoUrl,
+                                ),
+                                name: auth.user?.name,
+                                size: 48,
+                                borderWidth: 2,
                               ),
-                              const SizedBox(width: 8),
-                              Text(
-                                'Namaste, ${auth.user?.name.split(' ').first ?? 'User'}!',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Namaste, ${auth.user?.name.split(' ').first ?? 'User'}!',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    if (auth.user?.name.isNotEmpty == true)
+                                      Text(
+                                        auth.user!.name,
+                                        style: TextStyle(
+                                          color: Colors.white.withOpacity(0.85),
+                                          fontSize: 12,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                  ],
                                 ),
                               ),
                             ],
@@ -70,12 +92,18 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
             title: const Text(
-              'Astrosarthi konnect',
+              'Astrosarathi Konnect',
               style: TextStyle(
                 color: Colors.white,
-                fontWeight: FontWeight.bold,
+                // fontWeight: FontWeight.bold,
               ),
             ),
+            actions: [
+              IconButton(
+                onPressed: () => Get.to(() => const AstrologerNotificationScreen()),
+                icon: const Icon(Icons.notifications_outlined, color: Colors.white),
+              ),
+            ],
           ),
           SliverToBoxAdapter(
             child: Padding(
@@ -83,33 +111,85 @@ class HomeScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  GetBuilder<AstrologerStatusController>(
+                    builder: (statusCtrl) => Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(14),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Availability',
+                              style: TextStyle(fontWeight: FontWeight.w700),
+                            ),
+                            const SizedBox(height: 8),
+                            const Text(
+                              'Go online to receive chat, audio and video calls.',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Wrap(
+                              spacing: 8,
+                              children: [
+                                _statusChip(
+                                  'Online',
+                                  'online',
+                                  Colors.green,
+                                  statusCtrl,
+                                ),
+                                _statusChip(
+                                  'Busy',
+                                  'busy',
+                                  Colors.orange,
+                                  statusCtrl,
+                                ),
+                                _statusChip(
+                                  'Offline',
+                                  'offline',
+                                  Colors.grey,
+                                  statusCtrl,
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
                   // Quick Actions
                   _sectionTitle('Quick Consult'),
                   const SizedBox(height: 12),
-                  Row(
+                  GridView.count(
+                    crossAxisCount: 2,
+                    mainAxisSpacing: 12,
+                    crossAxisSpacing: 12,
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    childAspectRatio: 1.65,
                     children: [
-                      _quickAction(
+                      _quickActionTile(
                         context,
                         Icons.chat_bubble_rounded,
                         'Chat',
                         AppColors.primary,
                       ),
-                      const SizedBox(width: 12),
-                      _quickAction(
+                      _quickActionTile(
                         context,
                         Icons.call_rounded,
-                        'Call',
+                        'Audio Call',
                         AppColors.gold,
                       ),
-                      const SizedBox(width: 12),
-                      _quickAction(
+                      _quickActionTile(
                         context,
                         Icons.videocam_rounded,
-                        'Video',
+                        'Video Call',
                         AppColors.primaryLight,
                       ),
-                      const SizedBox(width: 12),
-                      _quickAction(
+                      _quickActionTile(
                         context,
                         Icons.home_work_rounded,
                         'Vastu',
@@ -118,34 +198,32 @@ class HomeScreen extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 24),
-                  // Horoscope banner
-                  _horoscopeBanner(),
-                  const SizedBox(height: 24),
-
-                  // Top Astrologers
-                  const SizedBox(height: 24),
-                  // Live Now
-                  _sectionTitle('Live Now 🔴'),
-                  const SizedBox(height: 12),
-                  GetBuilder<LiveController>(
-                    builder: (ctrl) => SizedBox(
-                      height: 130,
-                      child: ListView.separated(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: ctrl.streams.length,
-                        separatorBuilder: (_, __) => const SizedBox(width: 12),
-                        itemBuilder: (_, i) => _LiveCard(ctrl.streams[i]),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
                 ],
               ),
             ),
           ),
         ],
       ),
-    );
+      );
+  }
+
+  Widget _statusChip(
+    String label,
+    String value,
+    Color color,
+    AstrologerStatusController ctrl,
+  ) {
+    final selected = ctrl.status == value;
+    return ChoiceChip(
+      label: Text(label),
+      selected: selected,
+      onSelected: ctrl.isUpdating ? null : (_) => ctrl.setStatus(value),
+      selectedColor: color.withOpacity(0.2),
+      labelStyle: TextStyle(
+        color: selected ? color : AppColors.textSecondary,
+        fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+      ),
+      );
   }
 
   Widget _sectionTitle(String t) => Text(
@@ -155,21 +233,19 @@ class HomeScreen extends StatelessWidget {
       fontWeight: FontWeight.bold,
       color: AppColors.textPrimary,
     ),
-  );
+      );
 
-  Widget _quickAction(
+  Widget _quickActionTile(
     BuildContext context,
     IconData icon,
     String label,
     Color color,
   ) {
     void showIncomingOnlyInfo(String channel) {
-      Get.snackbar(
-        '$channel Calls',
-        'Incoming $channel calls from users will ring on this screen automatically.',
+      AppSnackbar.show(
+        '$channel',
+        'Stay online on home screen. Incoming $channel from users will ring here.',
         snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: AppColors.primaryDark,
-        colorText: Colors.white,
         margin: const EdgeInsets.all(12),
         duration: const Duration(seconds: 3),
       );
@@ -177,170 +253,53 @@ class HomeScreen extends StatelessWidget {
 
     final actions = {
       'Chat': () => Get.find<NavController>().changePage(1),
-      'Call': () => showIncomingOnlyInfo('Audio'),
-      'Video': () => showIncomingOnlyInfo('Video'),
+      'Audio Call': () => showIncomingOnlyInfo('Audio'),
+      'Video Call': () => showIncomingOnlyInfo('Video'),
       'Vastu': () => Get.to(() => const VastuScreen()),
     };
 
-    return Expanded(
-      child: GestureDetector(
-        onTap: actions[label] ?? () {},
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 14),
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(14),
-          ),
-          child: Column(
-            children: [
-              Icon(icon, color: color),
-              const SizedBox(height: 6),
-              Text(label),
-            ],
-          ),
+    return InkWell(
+      borderRadius: BorderRadius.circular(16),
+      onTap: actions[label] ?? () {},
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.10),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: color.withValues(alpha: 0.20)),
         ),
-      ),
-    );
-  }
-
-  Widget _horoscopeBanner() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF005F5F), Color(0xFF008080)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
-                Text(
-                  'Today\'s Horoscope',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                SizedBox(height: 6),
-                Text(
-                  'Stars align for new beginnings. Mercury in your 5th house brings creativity and joy.',
-                  style: TextStyle(
-                    color: AppColors.primarySurface,
-                    fontSize: 12,
-                  ),
-                  maxLines: 3,
-                ),
-                SizedBox(height: 12),
-                Text(
-                  'Read More →',
-                  style: TextStyle(
-                    color: AppColors.gold,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
+        child: Row(
+          children: [
+            Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.14),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Icon(icon, color: color),
             ),
-          ),
-          const SizedBox(width: 16),
-          const Icon(Icons.stars_rounded, color: AppColors.gold, size: 60),
-        ],
-      ),
-    );
-  }
-}
-
-class _LiveCard extends StatelessWidget {
-  final Map<String, dynamic> s;
-  const _LiveCard(this.s, {super.key});
-
-  @override
-  @override
-  Widget build(BuildContext context) {
-    final astroName = (s['astrologer_name'] ?? 'Unknown').toString();
-
-    final title = (s['title'] ?? 'Untitled').toString();
-
-    final viewers = (s['viewers'] ?? 0).toString();
-
-    return Container(
-      width: 200,
-      decoration: BoxDecoration(
-        color: AppColors.primaryDark,
-        borderRadius: BorderRadius.circular(16),
-        gradient: const LinearGradient(
-          colors: [Color(0xFF003F3F), AppColors.primary],
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                label,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Icon(
+              Icons.arrow_forward_ios_rounded,
+              size: 16,
+              color: AppColors.textPrimary.withValues(alpha: 0.35),
+            ),
+          ],
         ),
       ),
-
-      padding: const EdgeInsets.all(14),
-
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-
-                decoration: BoxDecoration(
-                  color: AppColors.busy,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-
-                child: const Text(
-                  'LIVE',
-                  style: TextStyle(color: Colors.white, fontSize: 10),
-                ),
-              ),
-
-              const Spacer(),
-
-              const Icon(
-                Icons.remove_red_eye_outlined,
-                color: Colors.white70,
-                size: 13,
-              ),
-
-              const SizedBox(width: 4),
-
-              Text(
-                viewers,
-                style: const TextStyle(color: Colors.white70, fontSize: 11),
-              ),
-            ],
-          ),
-
-          const Spacer(),
-
-          Text(
-            title,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-
-          const SizedBox(height: 4),
-
-          Text(
-            astroName,
-            style: const TextStyle(color: AppColors.goldLight, fontSize: 11),
-          ),
-        ],
-      ),
-    );
+      );
   }
 }
