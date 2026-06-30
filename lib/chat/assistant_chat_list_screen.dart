@@ -42,6 +42,7 @@ class AssistantChatListScreen extends StatelessWidget {
             }
 
             return ListView.separated(
+              padding: const EdgeInsets.only(bottom: 20),
               itemCount: controller.sessions.length,
               separatorBuilder: (_, _) => const Divider(height: 1, indent: 72),
               itemBuilder: (context, index) {

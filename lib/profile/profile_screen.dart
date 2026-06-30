@@ -6,6 +6,7 @@ import 'package:astrosarthi_vendor/earnings/earnings_screen.dart';
 import 'package:astrosarthi_vendor/settings/settings_screen.dart';
 import 'package:astrosarthi_vendor/support/help_support_screen.dart';
 import 'package:astrosarthi_vendor/utils/app_snackbar.dart';
+import 'package:astrosarthi_vendor/utils/safe_bottom.dart';
 import 'package:astrosarthi_vendor/utils/profile_photo_url.dart';
 import 'package:astrosarthi_vendor/widgets/profile_avatar.dart';
 import 'package:astrosarthi_vendor/vastu/vastu_screen.dart';
@@ -188,6 +189,7 @@ class ProfileScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 30),
+                    SafeBottom.tabSpacer(),
                   ],
                 ),
               ),

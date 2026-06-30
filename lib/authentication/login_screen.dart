@@ -3,6 +3,7 @@ import 'package:astrosarthi_vendor/authentication/auth_controller.dart';
 import 'package:astrosarthi_vendor/authentication/register_screen.dart';
 import 'package:astrosarthi_vendor/main.dart';
 import 'package:astrosarthi_vendor/utils/app_snackbar.dart';
+import 'package:astrosarthi_vendor/utils/safe_bottom.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -204,6 +205,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ],
                   ),
                 ),
+                SafeBottom.spacer(context),
               ],
             ),
           ),

@@ -1,6 +1,7 @@
 import 'package:astrosarthi_vendor/app_theme.dart';
 import 'package:astrosarthi_vendor/live_stream/host_screen.dart';
 import 'package:astrosarthi_vendor/live_stream/live_controller.dart';
+import 'package:astrosarthi_vendor/utils/safe_bottom.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -131,6 +132,7 @@ class LiveScreen extends StatelessWidget {
                   'End the live when you are done to avoid background streaming',
                 ],
               ),
+              SafeBottom.tabSpacer(),
             ],
           ),
         ),

@@ -1,4 +1,5 @@
 import 'package:astrosarthi_vendor/app_theme.dart';
+import 'package:astrosarthi_vendor/utils/safe_bottom.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -77,7 +78,12 @@ class AssistantChatScreen extends StatelessWidget {
                     : list.isEmpty
                     ? const _EmptyState()
                     : ListView.builder(
-                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 6),
+                        padding: EdgeInsets.fromLTRB(
+                          16,
+                          16,
+                          16,
+                          SafeBottom.forScroll(context, extra: 6),
+                        ),
                         itemCount: list.length + (ctrl.isTyping ? 1 : 0),
                         itemBuilder: (_, i) {
                           if (ctrl.isTyping && i == list.length) {
@@ -209,7 +215,7 @@ class _InputBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(12, 8, 12, 16),
+      padding: SafeBottom.inputBarPadding(context),
       decoration: const BoxDecoration(
         color: Colors.white,
         boxShadow: [
@@ -400,9 +406,12 @@ class _AssistantReplyBarState extends State<_AssistantReplyBar> {
 
   @override
   Widget build(BuildContext context) {
-    final bottom = MediaQuery.of(context).viewInsets.bottom;
     return Container(
-      padding: EdgeInsets.fromLTRB(12, 10, 12, 12 + bottom),
+      padding: SafeBottom.inputBarPadding(
+        context,
+        top: 10,
+        extra: 12,
+      ),
       decoration: BoxDecoration(
         color: AppColors.surface,
         border: Border(

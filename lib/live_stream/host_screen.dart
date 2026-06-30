@@ -1,11 +1,34 @@
 import 'package:agora_rtc_engine/agora_rtc_engine.dart';
 import 'package:astrosarthi_vendor/app_theme.dart';
 import 'package:astrosarthi_vendor/live_stream/live_controller.dart';
+import 'package:astrosarthi_vendor/utils/safe_bottom.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-class HostScreen extends StatelessWidget {
+class HostScreen extends StatefulWidget {
   const HostScreen({super.key});
+
+  @override
+  State<HostScreen> createState() => _HostScreenState();
+}
+
+class _HostScreenState extends State<HostScreen> {
+  @override
+  void initState() {
+    super.initState();
+    if (Get.isRegistered<LiveController>()) {
+      Get.find<LiveController>().setHostScreenActive(true);
+      Get.find<LiveController>().ensureLiveChatListening();
+    }
+  }
+
+  @override
+  void dispose() {
+    if (Get.isRegistered<LiveController>()) {
+      Get.find<LiveController>().setHostScreenActive(false);
+    }
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -15,6 +38,9 @@ class HostScreen extends StatelessWidget {
       backgroundColor: Colors.black,
       body: GetBuilder<LiveController>(
         builder: (ctrl) {
+          final navBottom = SafeBottom.inset(context);
+          const commentBarHeight = 64.0;
+
           return Stack(
             fit: StackFit.expand,
             children: [
@@ -30,14 +56,14 @@ class HostScreen extends StatelessWidget {
               ),
               Positioned(
                 right: 16,
-                bottom: 140,
+                bottom: 140 + navBottom,
                 child: _SideActions(ctrl: ctrl),
               ),
 
               Positioned(
                 left: 12,
                 right: 80,
-                bottom: 90,
+                bottom: commentBarHeight + navBottom + 16,
                 child: _CommentsList(ctrl: ctrl),
               ),
 
@@ -330,15 +356,27 @@ class _CommentsList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final list = ctrl.comments;
-    if (list.isEmpty) return const SizedBox.shrink();
+    if (list.isEmpty) {
+      return const SizedBox(
+        height: 40,
+        child: Align(
+          alignment: Alignment.bottomLeft,
+          child: Text(
+            'Live chat — viewer messages appear here',
+            style: TextStyle(color: Colors.white54, fontSize: 12),
+          ),
+        ),
+      );
+    }
+
+    final visible = list.length > 8 ? list.sublist(list.length - 8) : list;
 
     return SizedBox(
       height: 200,
       child: ListView.builder(
-        reverse: true,
-        itemCount: list.length > 8 ? 8 : list.length,
+        itemCount: visible.length,
         itemBuilder: (_, i) {
-          final c = list[i];
+          final c = visible[i];
           return Padding(
             padding: const EdgeInsets.only(bottom: 6),
             child: Row(
@@ -401,9 +439,8 @@ class _CommentBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bottom = MediaQuery.of(context).viewInsets.bottom;
     return Container(
-      padding: EdgeInsets.fromLTRB(12, 8, 12, 12 + bottom),
+      padding: SafeBottom.inputBarPadding(context, top: 8, extra: 12),
       color: Colors.transparent,
       child: Row(
         children: [

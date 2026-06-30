@@ -103,10 +103,12 @@ class MainShell extends StatelessWidget {
     return GetBuilder<NavController>(
       builder: (nav) => Scaffold(
         body: IndexedStack(index: nav.currentIndex, children: _pages),
-        bottomNavigationBar: BottomNavigationBar(
-          currentIndex: nav.currentIndex,
-          onTap: nav.changePage,
-          items: const [
+        bottomNavigationBar: SafeArea(
+          top: false,
+          child: BottomNavigationBar(
+            currentIndex: nav.currentIndex,
+            onTap: nav.changePage,
+            items: const [
             BottomNavigationBarItem(
               icon: Icon(Icons.home_rounded),
               label: 'Home',
@@ -128,6 +130,7 @@ class MainShell extends StatelessWidget {
               label: 'Profile',
             ),
           ],
+        ),
         ),
       ),
     );

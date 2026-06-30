@@ -1,4 +1,5 @@
 import 'package:astrosarthi_vendor/utils/app_snackbar.dart';
+import 'package:astrosarthi_vendor/utils/safe_bottom.dart';
 import 'package:astrosarthi_vendor/vastu/vastu_attachment_helper.dart';
 import 'package:astrosarthi_vendor/vastu/vastu_controller.dart';
 import 'package:flutter/material.dart';
@@ -26,7 +27,12 @@ class VastuScreen extends StatelessWidget {
           return RefreshIndicator(
             onRefresh: ctrl.getVastuRequest,
             child: ListView.builder(
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.fromLTRB(
+                16,
+                16,
+                16,
+                SafeBottom.forScroll(context, extra: 8),
+              ),
               itemCount: ctrl.vastuRequests.length,
               itemBuilder: (context, index) {
                 final item = ctrl.vastuRequests[index];

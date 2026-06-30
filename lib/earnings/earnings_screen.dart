@@ -1,5 +1,6 @@
 import 'package:astrosarthi_vendor/app_theme.dart';
 import 'package:astrosarthi_vendor/earnings/earnings_controller.dart';
+import 'package:astrosarthi_vendor/utils/safe_bottom.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -27,7 +28,12 @@ class EarningsScreen extends StatelessWidget {
               : RefreshIndicator(
                   onRefresh: ctrl.loadAll,
                   child: ListView(
-                    padding: const EdgeInsets.all(16),
+                    padding: EdgeInsets.fromLTRB(
+                      16,
+                      16,
+                      16,
+                      SafeBottom.forScroll(context, extra: 24),
+                    ),
                     children: [
                       _infoCard(
                         '50% revenue share with 10% TDS on your share. Net amount is credited to wallet after ITR compliance.',

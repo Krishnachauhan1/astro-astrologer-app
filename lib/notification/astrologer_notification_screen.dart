@@ -1,6 +1,7 @@
 import 'package:astrosarthi_vendor/app_theme.dart';
 import 'package:astrosarthi_vendor/notification/astrologer_notification_controller.dart';
 import 'package:astrosarthi_vendor/utils/session_request_api.dart';
+import 'package:astrosarthi_vendor/utils/safe_bottom.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -35,7 +36,12 @@ class AstrologerNotificationScreen extends StatelessWidget {
             : RefreshIndicator(
                 onRefresh: c.fetchNotifications,
                 child: ListView.separated(
-                  padding: const EdgeInsets.all(12),
+                  padding: EdgeInsets.fromLTRB(
+                    12,
+                    12,
+                    12,
+                    SafeBottom.forScroll(context, extra: 16),
+                  ),
                   itemCount: c.items.length,
                   separatorBuilder: (_, __) => const SizedBox(height: 8),
                   itemBuilder: (_, i) {

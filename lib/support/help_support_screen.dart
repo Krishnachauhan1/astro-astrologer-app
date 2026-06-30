@@ -1,5 +1,6 @@
 import 'package:astrosarthi_vendor/app_theme.dart';
 import 'package:astrosarthi_vendor/utils/app_snackbar.dart';
+import 'package:astrosarthi_vendor/utils/safe_bottom.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -54,7 +55,12 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
         ),
       ),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.fromLTRB(
+          16,
+          16,
+          16,
+          SafeBottom.forScroll(context, extra: 24),
+        ),
         children: [
           Container(
             padding: const EdgeInsets.all(18),

@@ -1,4 +1,5 @@
 import 'package:astrosarthi_vendor/app_theme.dart';
+import 'package:astrosarthi_vendor/utils/safe_bottom.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -58,7 +59,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
               child: CircularProgressIndicator(color: AppColors.primary),
             )
           : ListView(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
+              padding: EdgeInsets.fromLTRB(
+                16,
+                12,
+                16,
+                SafeBottom.forScroll(context, extra: 24),
+              ),
               children: [
                 _sectionTitle('Notifications'),
                 _card([
