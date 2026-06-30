@@ -108,7 +108,8 @@ class _HostVideoPipOverlayState extends State<HostVideoPipOverlay> {
 
         final remoteUid = lc.callRemoteUid ?? lc.expectedCallRemoteUid;
         final callConn = lc.callRtcConnection;
-        final showRemote = lc.engine != null &&
+        final showRemote =
+            lc.engine != null &&
             lc.callJoined &&
             callConn != null &&
             remoteUid != null &&
@@ -129,7 +130,8 @@ class _HostVideoPipOverlayState extends State<HostVideoPipOverlay> {
                   ),
                   connection: callConn,
                   useAndroidSurfaceView:
-                      !kIsWeb && defaultTargetPlatform == TargetPlatform.android,
+                      !kIsWeb &&
+                      defaultTargetPlatform == TargetPlatform.android,
                   useFlutterTexture:
                       !kIsWeb && defaultTargetPlatform == TargetPlatform.iOS,
                 ),
@@ -150,10 +152,7 @@ class _HostVideoPipOverlayState extends State<HostVideoPipOverlay> {
               bottom: 0,
               child: Container(
                 color: Colors.black54,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 6,
-                  vertical: 4,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [

@@ -1,5 +1,5 @@
-import 'package:astrosarthi_vendor/servicess/api_service.dart';
 import 'package:get/get.dart';
+import '../servicess/api_service.dart';
 
 class EarningsController extends GetxController {
   bool isLoading = false;
@@ -22,15 +22,18 @@ class EarningsController extends GetxController {
         summary = Map<String, dynamic>.from(summaryRes['data'] as Map);
       }
 
-      final dailyRes = await ApiService.get('/astrologer/earnings/daily?days=30');
+      final dailyRes = await ApiService.get(
+        '/astrologer/earnings/daily?days=30',
+      );
       if (dailyRes['success'] == true && dailyRes['data'] is List) {
         daily = (dailyRes['data'] as List)
             .map((e) => Map<String, dynamic>.from(e as Map))
             .toList();
       }
 
-      final monthlyRes =
-          await ApiService.get('/astrologer/earnings/monthly?year=${DateTime.now().year}');
+      final monthlyRes = await ApiService.get(
+        '/astrologer/earnings/monthly?year=${DateTime.now().year}',
+      );
       if (monthlyRes['success'] == true && monthlyRes['data'] is List) {
         monthly = (monthlyRes['data'] as List)
             .map((e) => Map<String, dynamic>.from(e as Map))
@@ -49,5 +52,6 @@ class EarningsController extends GetxController {
     return {};
   }
 
-  String money(dynamic value) => '₹${(double.tryParse('$value') ?? 0).toStringAsFixed(0)}';
+  String money(dynamic value) =>
+      '₹${(double.tryParse('$value') ?? 0).toStringAsFixed(0)}';
 }

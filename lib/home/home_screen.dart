@@ -5,6 +5,7 @@ import 'package:astrosarthi_vendor/main.dart';
 import 'package:astrosarthi_vendor/notification/astrologer_notification_screen.dart';
 import 'package:astrosarthi_vendor/utils/app_snackbar.dart';
 import 'package:astrosarthi_vendor/utils/profile_photo_url.dart';
+import 'package:astrosarthi_vendor/utils/safe_bottom.dart';
 import 'package:astrosarthi_vendor/vastu/vastu_screen.dart';
 import 'package:astrosarthi_vendor/widgets/profile_avatar.dart';
 import 'package:flutter/material.dart';
@@ -198,6 +199,7 @@ class HomeScreen extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 24),
+                  SafeBottom.tabSpacer(),
                 ],
               ),
             ),

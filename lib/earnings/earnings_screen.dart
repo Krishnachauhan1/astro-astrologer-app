@@ -1,5 +1,6 @@
 import 'package:astrosarthi_vendor/app_theme.dart';
 import 'package:astrosarthi_vendor/earnings/earnings_controller.dart';
+import 'package:astrosarthi_vendor/utils/safe_bottom.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -21,11 +22,18 @@ class EarningsScreen extends StatelessWidget {
             title: const Text('My Earnings'),
           ),
           body: ctrl.isLoading
-              ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+              ? const Center(
+                  child: CircularProgressIndicator(color: AppColors.primary),
+                )
               : RefreshIndicator(
                   onRefresh: ctrl.loadAll,
                   child: ListView(
-                    padding: const EdgeInsets.all(16),
+                    padding: EdgeInsets.fromLTRB(
+                      16,
+                      16,
+                      16,
+                      SafeBottom.forScroll(context, extra: 24),
+                    ),
                     children: [
                       _infoCard(
                         '50% revenue share with 10% TDS on your share. Net amount is credited to wallet after ITR compliance.',
@@ -57,11 +65,17 @@ class EarningsScreen extends StatelessWidget {
                       const SizedBox(height: 20),
                       const Text(
                         'Daily earnings (30 days)',
-                        style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 16,
+                        ),
                       ),
                       const SizedBox(height: 10),
                       if (ctrl.daily.isEmpty)
-                        const Text('No earnings yet', style: TextStyle(color: AppColors.textSecondary))
+                        const Text(
+                          'No earnings yet',
+                          style: TextStyle(color: AppColors.textSecondary),
+                        )
                       else
                         ...ctrl.daily.map(
                           (row) => Card(
@@ -81,17 +95,25 @@ class EarningsScreen extends StatelessWidget {
                       const SizedBox(height: 20),
                       const Text(
                         'Monthly earnings',
-                        style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 16,
+                        ),
                       ),
                       const SizedBox(height: 10),
                       if (ctrl.monthly.isEmpty)
-                        const Text('No monthly data', style: TextStyle(color: AppColors.textSecondary))
+                        const Text(
+                          'No monthly data',
+                          style: TextStyle(color: AppColors.textSecondary),
+                        )
                       else
                         ...ctrl.monthly.map(
                           (row) => Card(
                             child: ListTile(
                               title: Text('${row['month_label']}'),
-                              subtitle: Text('TDS ${ctrl.money(row['tds_amount'])}'),
+                              subtitle: Text(
+                                'TDS ${ctrl.money(row['tds_amount'])}',
+                              ),
                               trailing: Text(
                                 ctrl.money(row['net_amount']),
                                 style: const TextStyle(
@@ -105,9 +127,9 @@ class EarningsScreen extends StatelessWidget {
                     ],
                   ),
                 ),
-      );
+        );
       },
-      );
+    );
   }
 
   Widget _infoCard(String text) {
@@ -118,7 +140,7 @@ class EarningsScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
       ),
       child: Text(text, style: const TextStyle(fontSize: 12, height: 1.4)),
-      );
+    );
   }
 
   Widget _statCard(String label, String value, String sub) {
@@ -133,7 +155,10 @@ class EarningsScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: const TextStyle(color: Colors.white70, fontSize: 12)),
+          Text(
+            label,
+            style: const TextStyle(color: Colors.white70, fontSize: 12),
+          ),
           const SizedBox(height: 8),
           Text(
             value,
@@ -143,13 +168,20 @@ class EarningsScreen extends StatelessWidget {
               fontWeight: FontWeight.w800,
             ),
           ),
-          Text(sub, style: const TextStyle(color: Colors.white70, fontSize: 11)),
+          Text(
+            sub,
+            style: const TextStyle(color: Colors.white70, fontSize: 11),
+          ),
         ],
       ),
-      );
+    );
   }
 
-  Widget _breakdownCard(String title, Map<String, dynamic> data, EarningsController ctrl) {
+  Widget _breakdownCard(
+    String title,
+    Map<String, dynamic> data,
+    EarningsController ctrl,
+  ) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -166,7 +198,7 @@ class EarningsScreen extends StatelessWidget {
           ],
         ),
       ),
-      );
+    );
   }
 
   Widget _row(String label, String value) {
@@ -175,10 +207,19 @@ class EarningsScreen extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: const TextStyle(color: AppColors.textSecondary, fontSize: 13)),
-          Text(value, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+          Text(
+            label,
+            style: const TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 13,
+            ),
+          ),
+          Text(
+            value,
+            style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+          ),
         ],
       ),
-      );
+    );
   }
 }

@@ -1,5 +1,5 @@
-
 import 'package:astrosarthi_vendor/app_theme.dart';
+import 'package:astrosarthi_vendor/utils/safe_bottom.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -55,25 +55,40 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ),
       ),
       body: _loading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+          ? const Center(
+              child: CircularProgressIndicator(color: AppColors.primary),
+            )
           : ListView(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
+              padding: EdgeInsets.fromLTRB(
+                16,
+                12,
+                16,
+                SafeBottom.forScroll(context, extra: 24),
+              ),
               children: [
                 _sectionTitle('Notifications'),
                 _card([
                   SwitchListTile(
                     value: _pushEnabled,
-                    onChanged: (v) => _save(_keyPush, v, (x) => _pushEnabled = x),
+                    onChanged: (v) =>
+                        _save(_keyPush, v, (x) => _pushEnabled = x),
                     activeThumbColor: AppColors.primary,
-                    title: const Text('Push notifications', style: TextStyle(fontWeight: FontWeight.w600)),
+                    title: const Text(
+                      'Push notifications',
+                      style: TextStyle(fontWeight: FontWeight.w600),
+                    ),
                     subtitle: const Text('New chat, call and live requests'),
                   ),
                   const Divider(height: 1),
                   SwitchListTile(
                     value: _soundEnabled,
-                    onChanged: (v) => _save(_keySound, v, (x) => _soundEnabled = x),
+                    onChanged: (v) =>
+                        _save(_keySound, v, (x) => _soundEnabled = x),
                     activeThumbColor: AppColors.primary,
-                    title: const Text('Sound alerts', style: TextStyle(fontWeight: FontWeight.w600)),
+                    title: const Text(
+                      'Sound alerts',
+                      style: TextStyle(fontWeight: FontWeight.w600),
+                    ),
                     subtitle: const Text('Ringtone for incoming sessions'),
                   ),
                 ]),
@@ -82,9 +97,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 _card([
                   SwitchListTile(
                     value: _showOnline,
-                    onChanged: (v) => _save(_keyAutoOnline, v, (x) => _showOnline = x),
+                    onChanged: (v) =>
+                        _save(_keyAutoOnline, v, (x) => _showOnline = x),
                     activeThumbColor: AppColors.primary,
-                    title: const Text('Show as available', style: TextStyle(fontWeight: FontWeight.w600)),
+                    title: const Text(
+                      'Show as available',
+                      style: TextStyle(fontWeight: FontWeight.w600),
+                    ),
                     subtitle: const Text('Let users see you when online'),
                   ),
                 ]),
@@ -92,9 +111,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 _sectionTitle('Legal'),
                 _card([
                   ListTile(
-                    leading: const Icon(Icons.privacy_tip_outlined, color: AppColors.primary),
-                    title: const Text('Privacy policy', style: TextStyle(fontWeight: FontWeight.w600)),
-                    trailing: const Icon(Icons.chevron_right_rounded, color: AppColors.textHint),
+                    leading: const Icon(
+                      Icons.privacy_tip_outlined,
+                      color: AppColors.primary,
+                    ),
+                    title: const Text(
+                      'Privacy policy',
+                      style: TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    trailing: const Icon(
+                      Icons.chevron_right_rounded,
+                      color: AppColors.textHint,
+                    ),
                     onTap: () => _showText(
                       'Privacy policy',
                       'Your astrologer profile and earnings data are kept confidential and used only for platform operations.',
@@ -102,9 +130,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   const Divider(height: 1, indent: 56),
                   ListTile(
-                    leading: const Icon(Icons.description_outlined, color: AppColors.primary),
-                    title: const Text('Terms of service', style: TextStyle(fontWeight: FontWeight.w600)),
-                    trailing: const Icon(Icons.chevron_right_rounded, color: AppColors.textHint),
+                    leading: const Icon(
+                      Icons.description_outlined,
+                      color: AppColors.primary,
+                    ),
+                    title: const Text(
+                      'Terms of service',
+                      style: TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    trailing: const Icon(
+                      Icons.chevron_right_rounded,
+                      color: AppColors.textHint,
+                    ),
                     onTap: () => _showText(
                       'Terms of service',
                       'You agree to respond to paid sessions promptly and maintain professional conduct on live, chat and calls.',
@@ -116,13 +153,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 _card(const [
                   ListTile(
                     leading: Icon(Icons.info_outline, color: AppColors.primary),
-                    title: Text('App version', style: TextStyle(fontWeight: FontWeight.w600)),
-                    trailing: Text('1.0.0', style: TextStyle(color: AppColors.textHint)),
+                    title: Text(
+                      'App version',
+                      style: TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    trailing: Text(
+                      '1.0.0',
+                      style: TextStyle(color: AppColors.textHint),
+                    ),
                   ),
                 ]),
               ],
             ),
-      );
+    );
   }
 
   void _showText(String title, String body) {
@@ -132,7 +175,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         content: SingleChildScrollView(child: Text(body)),
         actions: [TextButton(onPressed: Get.back, child: const Text('Close'))],
       ),
-      );
+    );
   }
 
   Widget _sectionTitle(String title) {
@@ -146,7 +189,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           color: AppColors.textHint,
         ),
       ),
-      );
+    );
   }
 
   Widget _card(List<Widget> children) {
@@ -167,6 +210,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
         clipBehavior: Clip.antiAlias,
         child: Column(children: children),
       ),
-      );
+    );
   }
 }

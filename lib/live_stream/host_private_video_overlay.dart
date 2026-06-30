@@ -20,7 +20,8 @@ class HostPrivateVideoOverlay extends StatefulWidget {
   });
 
   @override
-  State<HostPrivateVideoOverlay> createState() => _HostPrivateVideoOverlayState();
+  State<HostPrivateVideoOverlay> createState() =>
+      _HostPrivateVideoOverlayState();
 }
 
 class _HostPrivateVideoOverlayState extends State<HostPrivateVideoOverlay> {
@@ -31,8 +32,10 @@ class _HostPrivateVideoOverlayState extends State<HostPrivateVideoOverlay> {
   void initState() {
     super.initState();
     final sessionId =
-        int.tryParse('${widget.callData['session_id'] ?? widget.callData['sessionId']}') ??
-            0;
+        int.tryParse(
+          '${widget.callData['session_id'] ?? widget.callData['sessionId']}',
+        ) ??
+        0;
     _tag = 'host_video_$sessionId';
     _startCall();
   }
@@ -43,7 +46,8 @@ class _HostPrivateVideoOverlayState extends State<HostPrivateVideoOverlay> {
     }
     _liveSuspended = true;
 
-    final name = widget.callData['caller_name']?.toString() ??
+    final name =
+        widget.callData['caller_name']?.toString() ??
         widget.callData['callerName']?.toString() ??
         'User';
 
@@ -56,7 +60,7 @@ class _HostPrivateVideoOverlayState extends State<HostPrivateVideoOverlay> {
         onEmbeddedEnded: _handleEnded,
       ),
       tag: _tag,
-      );
+    );
 
     if (mounted) setState(() {});
   }
@@ -104,7 +108,7 @@ class _HostPrivateVideoOverlayState extends State<HostPrivateVideoOverlay> {
             if (ctrl.isLoading) {
               return const Center(
                 child: CircularProgressIndicator(color: AppColors.gold),
-      );
+              );
             }
             if (ctrl.errorMessage.isNotEmpty) {
               return Center(
@@ -116,7 +120,7 @@ class _HostPrivateVideoOverlayState extends State<HostPrivateVideoOverlay> {
                     style: const TextStyle(color: Colors.white70),
                   ),
                 ),
-      );
+              );
             }
 
             return Stack(
@@ -134,9 +138,11 @@ class _HostPrivateVideoOverlayState extends State<HostPrivateVideoOverlay> {
                         renderMode: RenderModeType.renderModeHidden,
                       ),
                       connection: RtcConnection(channelId: ctrl.channelName),
-                      useAndroidSurfaceView: !kIsWeb &&
+                      useAndroidSurfaceView:
+                          !kIsWeb &&
                           defaultTargetPlatform == TargetPlatform.android,
-                      useFlutterTexture: !kIsWeb &&
+                      useFlutterTexture:
+                          !kIsWeb &&
                           defaultTargetPlatform == TargetPlatform.iOS,
                     ),
                   )
@@ -158,11 +164,11 @@ class _HostPrivateVideoOverlayState extends State<HostPrivateVideoOverlay> {
                   ),
                 ),
               ],
-      );
+            );
           },
         ),
       ),
-      );
+    );
   }
 
   Widget _buildHeader(AgoraController ctrl, String callerName) {
@@ -206,12 +212,14 @@ class _HostPrivateVideoOverlayState extends State<HostPrivateVideoOverlay> {
           ),
           IconButton(
             onPressed: widget.onMinimize,
-            icon: const Icon(Icons.keyboard_arrow_down_rounded,
-                color: Colors.white),
+            icon: const Icon(
+              Icons.keyboard_arrow_down_rounded,
+              color: Colors.white,
+            ),
           ),
         ],
       ),
-      );
+    );
   }
 
   Widget _buildControls(AgoraController ctrl) {
@@ -242,7 +250,7 @@ class _HostPrivateVideoOverlayState extends State<HostPrivateVideoOverlay> {
           ),
         ],
       ),
-      );
+    );
   }
 }
 
@@ -265,6 +273,6 @@ class _RoundBtn extends StatelessWidget {
         ),
         child: Icon(icon, color: Colors.white),
       ),
-      );
+    );
   }
 }

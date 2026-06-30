@@ -3,7 +3,8 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
-const String baseUrl = 'https://astro.nextlogicsolution.id/api/v1';
+// const String baseUrl = 'https://astro.nextlogicsolution.id/api/v1';
+const String baseUrl = 'https://astrosarathikonnect.in/api/v1';
 const String imageBaseUrl = 'https://astro.nextlogicsolution.id/storage/';
 const String tokenKey = 'auth_token';
 
@@ -97,6 +98,6 @@ class ApiService {
         if (_token != null && _token!.isNotEmpty)
           'Authorization': 'Bearer $_token',
       },
-      );
+    );
   }
 }

@@ -1,5 +1,4 @@
-import 'package:astrosarthi_vendor/app_theme.dart';
-import 'package:astrosarthi_vendor/utils/profile_photo_url.dart'; 
+import 'package:astrosarthi_vendor/utils/profile_photo_url.dart';
 import 'package:flutter/material.dart';
 
 class ProfileAvatar extends StatelessWidget {
@@ -43,7 +42,7 @@ class ProfileAvatar extends StatelessWidget {
               errorBuilder: (_, __, ___) => _placeholder(initials),
             )
           : _placeholder(initials),
-      );
+    );
   }
 
   Widget _placeholder(String initials) {
@@ -59,6 +58,6 @@ class ProfileAvatar extends StatelessWidget {
           ),
         ),
       ),
-      );
+    );
   }
 }

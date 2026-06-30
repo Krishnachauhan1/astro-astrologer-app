@@ -35,7 +35,7 @@ class _HostPrivateChatOverlayState extends State<HostPrivateChatOverlay> {
         initialUserName: widget.userName,
       ),
       tag: _tag,
-      );
+    );
   }
 
   @override
@@ -74,13 +74,13 @@ class _HostPrivateChatOverlayState extends State<HostPrivateChatOverlay> {
                         textAlign: TextAlign.center,
                         style: TextStyle(color: Colors.white54, fontSize: 13),
                       ),
-      );
+                    );
                   }
                   return ListView.builder(
                     padding: const EdgeInsets.all(12),
                     itemCount: ctrl.messages.length,
                     itemBuilder: (_, i) => _MessageBubble(ctrl.messages[i]),
-      );
+                  );
                 },
               ),
             ),
@@ -94,7 +94,7 @@ class _HostPrivateChatOverlayState extends State<HostPrivateChatOverlay> {
           ],
         ),
       ),
-      );
+    );
   }
 
   Widget _buildHeader() {
@@ -144,13 +144,15 @@ class _HostPrivateChatOverlayState extends State<HostPrivateChatOverlay> {
           ),
           IconButton(
             onPressed: widget.onMinimize,
-            icon: const Icon(Icons.keyboard_arrow_down_rounded,
-                color: Colors.white),
+            icon: const Icon(
+              Icons.keyboard_arrow_down_rounded,
+              color: Colors.white,
+            ),
             tooltip: 'Minimize',
           ),
         ],
       ),
-      );
+    );
   }
 }
 
@@ -198,14 +200,18 @@ class _InputBar extends StatelessWidget {
                 customBorder: const CircleBorder(),
                 child: const Padding(
                   padding: EdgeInsets.all(11),
-                  child: Icon(Icons.send_rounded, color: Colors.white, size: 18),
+                  child: Icon(
+                    Icons.send_rounded,
+                    color: Colors.white,
+                    size: 18,
+                  ),
                 ),
               ),
             ),
           ],
         ),
       ),
-      );
+    );
   }
 }
 
@@ -236,6 +242,6 @@ class _MessageBubble extends StatelessWidget {
           ),
         ),
       ),
-      );
+    );
   }
 }

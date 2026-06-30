@@ -72,6 +72,7 @@
 
 import 'package:astrosarthi_vendor/authentication/auth_controller.dart';
 import 'package:astrosarthi_vendor/chat/chat_controller.dart';
+import 'package:astrosarthi_vendor/chat/chat_session_bindings.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'assistant_chat_list_screen.dart';
@@ -122,13 +123,9 @@ class _ChatSessionsTab extends StatelessWidget {
           return const Center(child: CircularProgressIndicator());
         }
 
-        if (Get.isRegistered<ChatListController>()) {
-          Get.find<ChatListController>().ensureListening();
-        }
+        ChatSessionBindings.bindForLoggedInAstrologer();
 
         return GetBuilder<ChatListController>(
-          init: ChatListController(),
-          tag: Get.arguments?['chatId'],
           builder: (controller) {
             if (controller.isLoading) {
               return const Center(child: CircularProgressIndicator());
@@ -151,6 +148,7 @@ class _ChatSessionsTab extends StatelessWidget {
         }
 
         return ListView.separated(
+          padding: const EdgeInsets.only(top: 8, bottom: 20),
           itemCount: controller.sessions.length,
           separatorBuilder: (_, _) => const Divider(height: 1, indent: 72),
           itemBuilder: (context, index) {

@@ -1,10 +1,9 @@
 import 'dart:typed_data';
 import 'package:astrosarthi_vendor/utils/app_snackbar.dart';
-
-import 'package:astrosarthi_vendor/servicess/api_service.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:pdfx/pdfx.dart';
+
+import '../servicess/api_service.dart';
 
 Future<void> openVastuAttachment(
   BuildContext context, {
@@ -22,7 +21,7 @@ Future<void> openVastuAttachment(
         fileName: fileName ?? 'Home map',
       ),
     ),
-      );
+  );
 }
 
 class VastuAttachmentLoaderScreen extends StatefulWidget {
@@ -83,7 +82,8 @@ class _VastuAttachmentLoaderScreenState
       }
 
       final type = widget.attachmentType?.toLowerCase() ?? '';
-      final isPdf = type == 'pdf' ||
+      final isPdf =
+          type == 'pdf' ||
           widget.fileName.toLowerCase().endsWith('.pdf') ||
           _looksLikePdf(bytes);
 
@@ -117,7 +117,7 @@ class _VastuAttachmentLoaderScreenState
         title: Text(widget.fileName, overflow: TextOverflow.ellipsis),
       ),
       body: _buildBody(),
-      );
+    );
   }
 
   Widget _buildBody() {
@@ -161,7 +161,7 @@ class _VastuAttachmentLoaderScreenState
         maxScale: 4,
         child: Image.memory(bytes, fit: BoxFit.contain),
       ),
-      );
+    );
   }
 }
 
@@ -195,7 +195,7 @@ class _VastuPdfMemoryViewerState extends State<VastuPdfMemoryViewer> {
       setState(() {
         _controller = PdfControllerPinch(
           document: PdfDocument.openData(widget.bytes),
-      );
+        );
       });
     } catch (e) {
       if (!mounted) return;

@@ -2,9 +2,10 @@ import 'package:astrosarthi_vendor/app_theme.dart';
 import 'package:astrosarthi_vendor/authentication/auth_controller.dart';
 import 'package:astrosarthi_vendor/authentication/register_screen.dart';
 import 'package:astrosarthi_vendor/main.dart';
+import 'package:astrosarthi_vendor/utils/app_snackbar.dart';
+import 'package:astrosarthi_vendor/utils/safe_bottom.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:astrosarthi_vendor/utils/app_snackbar.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -204,12 +205,13 @@ class _LoginScreenState extends State<LoginScreen> {
                     ],
                   ),
                 ),
+                SafeBottom.spacer(context),
               ],
             ),
           ),
         ),
       ),
-      );
+    );
   }
 
   Widget _buildField(
@@ -241,7 +243,7 @@ class _LoginScreenState extends State<LoginScreen> {
           horizontal: 16,
         ),
       ),
-      );
+    );
   }
 
   Future<void> _submit(AuthController auth) async {
@@ -254,10 +256,7 @@ class _LoginScreenState extends State<LoginScreen> {
     if (success) {
       Get.offAll(() => const MainShell());
     } else {
-      AppSnackbar.show(
-        'Error',
-        'Invalid credentials. Please try again.',
-      );
+      AppSnackbar.show('Error', 'Invalid credentials. Please try again.');
     }
   }
 }

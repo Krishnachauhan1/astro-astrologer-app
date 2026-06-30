@@ -25,7 +25,8 @@ class AppSnackbar {
       snackPosition: snackPosition,
       backgroundColor: bg,
       colorText: Colors.white,
-      margin: margin ?? const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      margin:
+          margin ?? const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       borderRadius: 12,
       duration: duration ?? const Duration(seconds: 3),
       icon: Icon(_icon(kind), color: Colors.white, size: 22),

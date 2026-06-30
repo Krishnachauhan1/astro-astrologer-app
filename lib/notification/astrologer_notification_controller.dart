@@ -1,7 +1,8 @@
-import 'package:astrosarthi_vendor/servicess/api_service.dart';
+import 'package:astrosarthi_vendor/utils/app_snackbar.dart';
 import 'package:astrosarthi_vendor/utils/session_request_api.dart';
 import 'package:get/get.dart';
-import 'package:astrosarthi_vendor/utils/app_snackbar.dart';
+
+import '../servicess/api_service.dart';
 
 class AstrologerNotificationController extends GetxController {
   bool isLoading = false;
@@ -18,9 +19,9 @@ class AstrologerNotificationController extends GetxController {
     update();
     try {
       final res = await ApiService.get('/notifications');
-      items = SessionRequestApi.parseNotificationList(res)
-          .where(SessionRequestApi.isPendingSessionRequest)
-          .toList();
+      items = SessionRequestApi.parseNotificationList(
+        res,
+      ).where(SessionRequestApi.isPendingSessionRequest).toList();
     } catch (_) {
       items = [];
     } finally {
@@ -54,7 +55,7 @@ class AstrologerNotificationController extends GetxController {
     await SessionRequestApi.rejectSession(
       sessionId,
       isChat: SessionRequestApi.isChatRequest(item),
-      );
+    );
     await fetchNotifications();
   }
 }

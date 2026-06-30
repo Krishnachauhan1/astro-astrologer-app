@@ -11,7 +11,8 @@ String? resolveProfilePhotoUrl({
   final fromUser = user?['profile_photo_url']?.toString().trim();
   if (fromUser != null && fromUser.isNotEmpty) return fromUser;
 
-  final path = profilePhoto?.trim() ?? user?['profile_photo']?.toString().trim();
+  final path =
+      profilePhoto?.trim() ?? user?['profile_photo']?.toString().trim();
   return resolveStorageUrl(path);
 }
 
