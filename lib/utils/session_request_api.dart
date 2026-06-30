@@ -1,11 +1,11 @@
-import 'package:astrosarthi_konnect_astrologer_app/calling/audio_call_screen.dart';
-import 'package:astrosarthi_konnect_astrologer_app/calling/video_call_screen.dart';
-import 'package:astrosarthi_konnect_astrologer_app/chat/chat_controller.dart';
-import 'package:astrosarthi_konnect_astrologer_app/chat/chat_screen.dart';
-import 'package:astrosarthi_konnect_astrologer_app/live_stream/live_controller.dart';
-import 'package:astrosarthi_konnect_astrologer_app/live_stream/live_host_chat_bridge.dart';
-import 'package:astrosarthi_konnect_astrologer_app/servicess/api_service.dart';
-import 'package:astrosarthi_konnect_astrologer_app/utils/call_session_api.dart';
+import 'package:astrosarthi_vendor/calling/audio_call_screen.dart';
+import 'package:astrosarthi_vendor/calling/video_call_screen.dart';
+import 'package:astrosarthi_vendor/chat/chat_controller.dart';
+import 'package:astrosarthi_vendor/chat/chat_screen.dart';
+import 'package:astrosarthi_vendor/live_stream/live_controller.dart';
+import 'package:astrosarthi_vendor/live_stream/live_host_chat_bridge.dart';
+import 'package:astrosarthi_vendor/servicess/api_service.dart';
+import 'package:astrosarthi_vendor/utils/call_session_api.dart';
 import 'package:get/get.dart';
 import 'app_snackbar.dart';
 

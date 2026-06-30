@@ -4,7 +4,7 @@ import 'package:astrosarthi_vendor/authentication/register_screen.dart';
 import 'package:astrosarthi_vendor/main.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:astrosarthi_konnect_astrologer_app/utils/app_snackbar.dart';
+import 'package:astrosarthi_vendor/utils/app_snackbar.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});

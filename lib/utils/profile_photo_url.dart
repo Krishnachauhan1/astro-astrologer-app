@@ -1,4 +1,4 @@
-import 'package:astrosarthi_konnect_astrologer_app/servicess/api_service.dart';
+import 'package:astrosarthi_vendor/servicess/api_service.dart';
 
 String? resolveProfilePhotoUrl({
   Map<String, dynamic>? user,

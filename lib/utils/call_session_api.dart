@@ -1,4 +1,4 @@
-import 'package:astrosarthi_konnect_astrologer_app/servicess/api_service.dart';
+import 'package:astrosarthi_vendor/servicess/api_service.dart';
 
 int? parseCallSessionId(Map<String, dynamic> data) {
   return int.tryParse(

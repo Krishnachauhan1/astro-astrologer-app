@@ -1,5 +1,5 @@
-import 'package:astrosarthi_konnect_astrologer_app/app_theme.dart';
-import 'package:astrosarthi_konnect_astrologer_app/chat/chat_controller.dart';
+import 'package:astrosarthi_vendor/app_theme.dart';
+import 'package:astrosarthi_vendor/chat/chat_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
