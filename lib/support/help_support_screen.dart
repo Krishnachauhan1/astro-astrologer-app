@@ -1,8 +1,9 @@
-import 'package:astrosarthi_konnect_astrologer_app/app_theme.dart';
+import 'package:astrosarthi_vendor/app_theme.dart';
+import 'package:astrosarthi_vendor/utils/app_snackbar.dart';
+import 'package:astrosarthi_vendor/utils/safe_bottom.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:astrosarthi_konnect_astrologer_app/utils/app_snackbar.dart';
 
 class HelpSupportScreen extends StatefulWidget {
   const HelpSupportScreen({super.key});
@@ -26,10 +27,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
 
   void _copy(String label, String value) {
     Clipboard.setData(ClipboardData(text: value));
-    AppSnackbar.show(
-      'Copied',
-      '$label copied',
-      );
+    AppSnackbar.show('Copied', '$label copied');
   }
 
   Future<void> _submit() async {
@@ -43,15 +41,13 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
     if (!mounted) return;
     setState(() => _sending = false);
     _issueCtrl.clear();
-    AppSnackbar.show(
-      'Submitted',
-      'Support will reach out within 24 hours.',
-      );
+    AppSnackbar.show('Submitted', 'Support will reach out within 24 hours.');
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(      appBar: AppBar(
+    return Scaffold(
+      appBar: AppBar(
         title: const Text('Help & Support'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
@@ -59,7 +55,12 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
         ),
       ),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.fromLTRB(
+          16,
+          16,
+          16,
+          SafeBottom.forScroll(context, extra: 24),
+        ),
         children: [
           Container(
             padding: const EdgeInsets.all(18),
@@ -147,7 +148,7 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
           ),
         ],
       ),
-      );
+    );
   }
 
   Widget _contact(IconData icon, String title, String value) {
@@ -160,21 +161,30 @@ class _HelpSupportScreenState extends State<HelpSupportScreen> {
         trailing: const Icon(Icons.copy_rounded, size: 18),
         onTap: () => _copy(title, value),
       ),
-      );
+    );
   }
 
   Widget _faq(String q, String a) {
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       child: ExpansionTile(
-        title: Text(q, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+        title: Text(
+          q,
+          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+        ),
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-            child: Text(a, style: const TextStyle(color: AppColors.textSecondary, height: 1.4)),
+            child: Text(
+              a,
+              style: const TextStyle(
+                color: AppColors.textSecondary,
+                height: 1.4,
+              ),
+            ),
           ),
         ],
       ),
-      );
+    );
   }
 }

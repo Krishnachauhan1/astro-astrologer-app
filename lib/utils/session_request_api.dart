@@ -1,11 +1,10 @@
-import 'package:astrosarthi_konnect_astrologer_app/calling/audio_call_screen.dart';
-import 'package:astrosarthi_konnect_astrologer_app/calling/video_call_screen.dart';
-import 'package:astrosarthi_konnect_astrologer_app/chat/chat_controller.dart';
-import 'package:astrosarthi_konnect_astrologer_app/chat/chat_screen.dart';
-import 'package:astrosarthi_konnect_astrologer_app/live_stream/live_controller.dart';
-import 'package:astrosarthi_konnect_astrologer_app/live_stream/live_host_chat_bridge.dart';
-import 'package:astrosarthi_konnect_astrologer_app/servicess/api_service.dart';
-import 'package:astrosarthi_konnect_astrologer_app/utils/call_session_api.dart';
+import 'package:astrosarthi_vendor/calling/audio_call_screen.dart';
+import 'package:astrosarthi_vendor/calling/video_call_screen.dart';
+import 'package:astrosarthi_vendor/chat/chat_controller.dart';
+import 'package:astrosarthi_vendor/chat/chat_screen.dart';
+import 'package:astrosarthi_vendor/live_stream/live_controller.dart';
+import 'package:astrosarthi_vendor/live_stream/live_host_chat_bridge.dart';
+import 'package:astrosarthi_vendor/utils/call_session_api.dart';
 import 'package:get/get.dart';
 import 'app_snackbar.dart';
 
@@ -33,18 +32,17 @@ class SessionRequestApi {
 
   static bool isPendingSessionRequest(Map<String, dynamic> item) {
     final payload = _payload(item);
-    final type = (item['type'] ??
-            item['notification_type'] ??
-            payload['type'] ??
-            '')
-        .toString()
-        .toLowerCase();
-    final status = (item['status'] ??
-            item['session_status'] ??
-            payload['status'] ??
-            'pending')
-        .toString()
-        .toLowerCase();
+    final type =
+        (item['type'] ?? item['notification_type'] ?? payload['type'] ?? '')
+            .toString()
+            .toLowerCase();
+    final status =
+        (item['status'] ??
+                item['session_status'] ??
+                payload['status'] ??
+                'pending')
+            .toString()
+            .toLowerCase();
 
     if (status != 'pending' && status != 'waiting' && status != 'requested') {
       return false;
@@ -67,28 +65,25 @@ class SessionRequestApi {
               item['id'] ??
               '')
           .toString(),
-      );
+    );
   }
 
-  static Future<bool> acceptSession(
-    int sessionId, {
-    bool isChat = false,
-  }) =>
+  static Future<bool> acceptSession(int sessionId, {bool isChat = false}) =>
       isChat ? acceptChatSession(sessionId) : acceptCallSession(sessionId);
 
-  static Future<bool> rejectSession(
-    int sessionId, {
-    bool isChat = false,
-  }) =>
+  static Future<bool> rejectSession(int sessionId, {bool isChat = false}) =>
       isChat ? rejectChatSession(sessionId) : rejectCallSession(sessionId);
 
   static Map<String, dynamic> normalizeCallData(Map<String, dynamic> item) {
     final payload = _payload(item);
-    final type = (item['type'] ?? payload['type'] ?? '').toString().toLowerCase();
-    final callType = (payload['callType'] ??
-            payload['call_type'] ??
-            (type.contains('video') ? 'video' : 'audio'))
-        .toString();
+    final type = (item['type'] ?? payload['type'] ?? '')
+        .toString()
+        .toLowerCase();
+    final callType =
+        (payload['callType'] ??
+                payload['call_type'] ??
+                (type.contains('video') ? 'video' : 'audio'))
+            .toString();
 
     return {
       ...payload,
@@ -97,23 +92,31 @@ class SessionRequestApi {
           payload['agora_app_id'] ?? payload['appId'] ?? item['agora_app_id'],
       'agora_token':
           payload['agora_token'] ?? payload['token'] ?? item['agora_token'],
-      'channel': payload['channel'] ??
-          payload['agora_channel'] ??
-          item['channel'],
+      'channel':
+          payload['channel'] ?? payload['agora_channel'] ?? item['channel'],
       'session_id': parseSessionId(item),
-      'caller_uid': payload['caller_uid'] ?? payload['user_id'] ?? payload['callerUid'],
+      'caller_uid':
+          payload['caller_uid'] ?? payload['user_id'] ?? payload['callerUid'],
       'caller_name':
-          payload['caller_name'] ?? payload['user_name'] ?? item['title'] ?? 'User',
+          payload['caller_name'] ??
+          payload['user_name'] ??
+          item['title'] ??
+          'User',
       'caller_image':
-          payload['caller_image'] ?? payload['user_avatar'] ?? payload['callerImage'],
+          payload['caller_image'] ??
+          payload['user_avatar'] ??
+          payload['callerImage'],
       'callType': callType.contains('video') ? 'video' : 'audio',
-      'expires_at': payload['expires_at'] ??
+      'expires_at':
+          payload['expires_at'] ??
           payload['session_expires_at'] ??
           item['expires_at'],
-      'session_expires_at': payload['session_expires_at'] ??
+      'session_expires_at':
+          payload['session_expires_at'] ??
           payload['expires_at'] ??
           item['session_expires_at'],
-      'duration_minutes': payload['duration_minutes'] ?? item['duration_minutes'],
+      'duration_minutes':
+          payload['duration_minutes'] ?? item['duration_minutes'],
       'session_minutes': payload['session_minutes'] ?? item['session_minutes'],
       'rate_per_min': payload['rate_per_min'] ?? item['rate_per_min'],
     };
@@ -126,7 +129,9 @@ class SessionRequestApi {
     return type.contains('chat');
   }
 
-  static Future<void> openSessionFromNotification(Map<String, dynamic> item) async {
+  static Future<void> openSessionFromNotification(
+    Map<String, dynamic> item,
+  ) async {
     if (isChatRequest(item)) {
       final sessionId = parseSessionId(item) ?? parseCallSessionId(item);
       if (sessionId != null) {
@@ -150,12 +155,7 @@ class SessionRequestApi {
         return;
       }
 
-      Get.put(
-        ChatController(
-          initialChatId: chatId,
-          initialUserName: userName,
-        ),
-      );
+      Get.put(ChatController(initialChatId: chatId, initialUserName: userName));
       await Get.to(() => const ChatScreen());
       return;
     }

@@ -2,6 +2,7 @@ import 'package:astrosarthi_vendor/authentication/auth_controller.dart';
 import 'package:astrosarthi_vendor/authentication/login_screen.dart';
 import 'package:astrosarthi_vendor/main.dart';
 import 'package:astrosarthi_vendor/utils/app_snackbar.dart';
+import 'package:astrosarthi_vendor/utils/safe_bottom.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -40,10 +41,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text("Register")),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
             _field(_nameCtrl, "Name"),
             _field(_emailCtrl, "Email"),
             _field(_phoneCtrl, "Phone"),
@@ -96,10 +98,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     : const Text("Register"),
               ),
             ),
+            SafeBottom.spacer(context),
           ],
         ),
       ),
-      );
+      ),
+    );
   }
 
   Widget _field(

@@ -1,3 +1,4 @@
+import 'package:astrosarthi_vendor/utils/safe_bottom.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'chat_controller.dart';
@@ -76,7 +77,12 @@ class ChatScreen extends StatelessWidget {
                         ),
                       )
                     : ListView.builder(
-                        padding: const EdgeInsets.all(16),
+                        padding: EdgeInsets.fromLTRB(
+                          16,
+                          16,
+                          16,
+                          SafeBottom.forScroll(context, extra: 8),
+                        ),
                         itemCount: ctrl.messages.length,
                         itemBuilder: (_, i) => _MessageBubble(ctrl.messages[i]),
                       ),
@@ -110,7 +116,7 @@ class _InputBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(12, 8, 12, 16),
+      padding: SafeBottom.inputBarPadding(context),
       decoration: const BoxDecoration(
         color: Colors.white,
         boxShadow: [

@@ -1,5 +1,6 @@
+import 'package:astrosarthi_vendor/app_theme.dart';
+import 'package:astrosarthi_vendor/utils/safe_bottom.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:astrosarthi_konnect_astrologer_app/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -29,7 +30,8 @@ class AssistantChatScreen extends StatelessWidget {
     return GetBuilder<AssistantChatController>(
       builder: (ctrl) {
         final list = ctrl.messages;
-        final allowAssistantReply = readOnly; // view-only opens reply-as-assistant
+        final allowAssistantReply =
+            readOnly; // view-only opens reply-as-assistant
         return Scaffold(
           appBar: AppBar(
             title: const Text('Assistant Chat'),
@@ -74,23 +76,28 @@ class AssistantChatScreen extends StatelessWidget {
                         ),
                       )
                     : list.isEmpty
-                        ? const _EmptyState()
-                        : ListView.builder(
-                            padding: const EdgeInsets.fromLTRB(16, 16, 16, 6),
-                            itemCount: list.length + (ctrl.isTyping ? 1 : 0),
-                            itemBuilder: (_, i) {
-                              if (ctrl.isTyping && i == list.length) {
-                                return const Padding(
-                                  padding: EdgeInsets.only(bottom: 10),
-                                  child: Align(
-                                    alignment: Alignment.centerLeft,
-                                    child: _TypingBubble(),
-                                  ),
-      );
-                              }
-                              return _MessageBubble(list[i]);
-                            },
-                          ),
+                    ? const _EmptyState()
+                    : ListView.builder(
+                        padding: EdgeInsets.fromLTRB(
+                          16,
+                          16,
+                          16,
+                          SafeBottom.forScroll(context, extra: 6),
+                        ),
+                        itemCount: list.length + (ctrl.isTyping ? 1 : 0),
+                        itemBuilder: (_, i) {
+                          if (ctrl.isTyping && i == list.length) {
+                            return const Padding(
+                              padding: EdgeInsets.only(bottom: 10),
+                              child: Align(
+                                alignment: Alignment.centerLeft,
+                                child: _TypingBubble(),
+                              ),
+                            );
+                          }
+                          return _MessageBubble(list[i]);
+                        },
+                      ),
               ),
               if (!readOnly)
                 _InputBar(
@@ -102,14 +109,12 @@ class AssistantChatScreen extends StatelessWidget {
                   sendColor: AppColors.primary,
                 ),
               if (allowAssistantReply)
-                _AssistantReplyBar(
-                  onSend: ctrl.sendAssistantMessage,
-                ),
+                _AssistantReplyBar(onSend: ctrl.sendAssistantMessage),
             ],
           ),
-      );
+        );
       },
-      );
+    );
   }
 }
 
@@ -191,7 +196,7 @@ class _QuotaBar extends StatelessWidget {
             ),
         ],
       ),
-      );
+    );
   }
 }
 
@@ -210,7 +215,7 @@ class _InputBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(12, 8, 12, 16),
+      padding: SafeBottom.inputBarPadding(context),
       decoration: const BoxDecoration(
         color: Colors.white,
         boxShadow: [
@@ -261,7 +266,7 @@ class _InputBar extends StatelessWidget {
           ),
         ],
       ),
-      );
+    );
   }
 }
 
@@ -292,8 +297,9 @@ class _MessageBubble extends StatelessWidget {
           ),
         ),
         child: Column(
-          crossAxisAlignment:
-              isUser ? CrossAxisAlignment.start : CrossAxisAlignment.end,
+          crossAxisAlignment: isUser
+              ? CrossAxisAlignment.start
+              : CrossAxisAlignment.end,
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
@@ -317,7 +323,7 @@ class _MessageBubble extends StatelessWidget {
           ],
         ),
       ),
-      );
+    );
   }
 
   String _formatTime(dynamic ts) {
@@ -355,17 +361,17 @@ class _TypingBubble extends StatelessWidget {
           _dot(),
         ],
       ),
-      );
+    );
   }
 
   Widget _dot() => Container(
-        width: 6,
-        height: 6,
-        decoration: BoxDecoration(
-          color: Colors.black54,
-          borderRadius: BorderRadius.circular(999),
-        ),
-      );
+    width: 6,
+    height: 6,
+    decoration: BoxDecoration(
+      color: Colors.black54,
+      borderRadius: BorderRadius.circular(999),
+    ),
+  );
 }
 
 class _AssistantReplyBar extends StatefulWidget {
@@ -400,9 +406,12 @@ class _AssistantReplyBarState extends State<_AssistantReplyBar> {
 
   @override
   Widget build(BuildContext context) {
-    final bottom = MediaQuery.of(context).viewInsets.bottom;
     return Container(
-      padding: EdgeInsets.fromLTRB(12, 10, 12, 12 + bottom),
+      padding: SafeBottom.inputBarPadding(
+        context,
+        top: 10,
+        extra: 12,
+      ),
       decoration: BoxDecoration(
         color: AppColors.surface,
         border: Border(
@@ -458,7 +467,7 @@ class _AssistantReplyBarState extends State<_AssistantReplyBar> {
           ),
         ],
       ),
-      );
+    );
   }
 }
 
@@ -507,7 +516,6 @@ class _EmptyState extends StatelessWidget {
           ],
         ),
       ),
-      );
+    );
   }
 }
-

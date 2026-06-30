@@ -1,24 +1,17 @@
 import 'dart:async';
-
-import 'package:astrosarthi_konnect_astrologer_app/authentication/auth_controller.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../utils/astrologer_identity.dart';
 import '../utils/user_privacy.dart';
-import 'chat_session_filter.dart';
 
 class AssistantChatListController extends GetxController {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   bool isLoading = true;
   List<Map<String, dynamic>> sessions = [];
   StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _sessionsSub;
-  int? _listeningForAstroId;
-
-  int? get _astrologerId {
-    if (!Get.isRegistered<AuthController>()) return null;
-    return ChatSessionFilter.parseId(Get.find<AuthController>().user?.id);
-  }
+  String? _listeningKey;
 
   @override
   void onInit() {
@@ -32,50 +25,77 @@ class AssistantChatListController extends GetxController {
     super.onClose();
   }
 
+  void reset() {
+    _sessionsSub?.cancel();
+    _sessionsSub = null;
+    _listeningKey = null;
+    sessions = [];
+    isLoading = true;
+    update();
+  }
+
   void ensureListening() {
-    final astroId = _astrologerId;
-    if (astroId == null) {
+    final key = _currentListenKey();
+    if (key == null) {
       sessions = [];
       isLoading = true;
       update();
       return;
     }
-    if (_listeningForAstroId == astroId && _sessionsSub != null) return;
-    _listeningForAstroId = astroId;
-    _sessionsSub?.cancel();
-    listenSessions(astroId);
-  }
+    if (_listeningKey == key && _sessionsSub != null) return;
 
-  void listenSessions(int astroId) {
+    _listeningKey = key;
+    _sessionsSub?.cancel();
+    sessions = [];
     isLoading = true;
     update();
+    listenSessions();
+  }
+
+  String? _currentListenKey() {
+    final uid = AstrologerIdentity.userId;
+    final rid = AstrologerIdentity.recordId;
+    if (uid == null && rid == null) return null;
+    return '$uid|$rid';
+  }
+
+  int? get _queryAstrologerId =>
+      AstrologerIdentity.userId ?? AstrologerIdentity.recordId;
+
+  void listenSessions() {
+    final astroId = _queryAstrologerId;
+    if (astroId == null) {
+      sessions = [];
+      isLoading = false;
+      update();
+      return;
+    }
 
     _sessionsSub = _firestore
         .collection('assistant_chat_sessions')
         .where('astrologerId', isEqualTo: astroId)
-        .orderBy('updatedAt', descending: true)
         .snapshots()
         .listen(
       (snap) {
-        sessions = _sortSessions(_mapSessions(snap.docs, astroId));
+        sessions = _sortSessions(_mapSessions(snap.docs));
         isLoading = false;
         update();
       },
       onError: (e) {
         debugPrint('Assistant chat list query error: $e');
-        _listenAllAndFilterClientSide(astroId);
+        _listenAllAndFilterClientSide();
       },
-      );
+    );
   }
 
-  void _listenAllAndFilterClientSide(int astroId) {
+  void _listenAllAndFilterClientSide() {
     _sessionsSub?.cancel();
     _sessionsSub = _firestore
         .collection('assistant_chat_sessions')
         .snapshots()
         .listen(
       (snap) {
-        sessions = _sortSessions(_mapSessions(snap.docs, astroId));
+        sessions = _sortSessions(_mapSessions(snap.docs));
         isLoading = false;
         update();
       },
@@ -84,7 +104,7 @@ class AssistantChatListController extends GetxController {
         isLoading = false;
         update();
       },
-      );
+    );
   }
 
   int _updatedAtMillis(Map<String, dynamic> session) {
@@ -95,15 +115,12 @@ class AssistantChatListController extends GetxController {
 
   List<Map<String, dynamic>> _sortSessions(List<Map<String, dynamic>> list) {
     final sorted = List<Map<String, dynamic>>.from(list);
-    sorted.sort(
-      (a, b) => _updatedAtMillis(b).compareTo(_updatedAtMillis(a)),
-      );
+    sorted.sort((a, b) => _updatedAtMillis(b).compareTo(_updatedAtMillis(a)));
     return sorted;
   }
 
   List<Map<String, dynamic>> _mapSessions(
     List<QueryDocumentSnapshot<Map<String, dynamic>>> docs,
-    int astroId,
   ) {
     return docs
         .map((d) {
@@ -111,11 +128,12 @@ class AssistantChatListController extends GetxController {
           data['id'] = d.id;
           return data;
         })
-        .where((s) => ChatSessionFilter.belongsToAstrologer(
-              s,
-              astrologerId: astroId,
-              docId: s['id']?.toString(),
-            ))
+        .where(
+          (s) => AstrologerIdentity.sessionBelongsToLoggedInAstrologer(
+            s,
+            docId: s['id']?.toString(),
+          ),
+        )
         .toList();
   }
 

@@ -1,6 +1,7 @@
-import 'package:astrosarthi_konnect_astrologer_app/servicess/api_service.dart';
+import 'package:astrosarthi_vendor/utils/app_snackbar.dart';
 import 'package:get/get.dart';
-import 'package:astrosarthi_konnect_astrologer_app/utils/app_snackbar.dart';
+
+import '../servicess/api_service.dart';
 
 class AstrologerStatusController extends GetxController {
   String status = 'offline';

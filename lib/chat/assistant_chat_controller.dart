@@ -1,6 +1,5 @@
 import 'dart:async';
-
-import 'package:astrosarthi_konnect_astrologer_app/authentication/auth_controller.dart';
+import 'package:astrosarthi_vendor/authentication/auth_controller.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -9,7 +8,8 @@ class AssistantChatController extends GetxController {
   static const int freeMessageLimit = 5;
 
   final String sessionId;
-  AssistantChatController({String? sessionId}) : sessionId = sessionId ?? _defaultSessionId();
+  AssistantChatController({String? sessionId})
+    : sessionId = sessionId ?? _defaultSessionId();
 
   final TextEditingController msgController = TextEditingController();
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -46,7 +46,8 @@ class AssistantChatController extends GetxController {
   bool get isPaid =>
       paidUntil != null && paidUntil!.isAfter(DateTime.now().toUtc());
 
-  int get freeRemaining => (freeMessageLimit - freeUsed).clamp(0, freeMessageLimit);
+  int get freeRemaining =>
+      (freeMessageLimit - freeUsed).clamp(0, freeMessageLimit);
 
   bool get canSend => isPaid || freeUsed < freeMessageLimit;
 
@@ -86,21 +87,24 @@ class AssistantChatController extends GetxController {
     _msgSub = _messagesRef
         .orderBy('createdAt', descending: false)
         .snapshots()
-        .listen((snap) {
-      messages = snap.docs.map((d) {
-        final data = d.data();
-        return {
-          'message': (data['text'] ?? '').toString(),
-          'isUser': (data['sender'] ?? 'user') == 'user',
-          'createdAt': data['createdAt'],
-        };
-      }).toList();
-      isLoading = false;
-      update();
-    }, onError: (_) {
-      isLoading = false;
-      update();
-    });
+        .listen(
+          (snap) {
+            messages = snap.docs.map((d) {
+              final data = d.data();
+              return {
+                'message': (data['text'] ?? '').toString(),
+                'isUser': (data['sender'] ?? 'user') == 'user',
+                'createdAt': data['createdAt'],
+              };
+            }).toList();
+            isLoading = false;
+            update();
+          },
+          onError: (_) {
+            isLoading = false;
+            update();
+          },
+        );
   }
 
   Future<void> sendMessage() async {
@@ -113,7 +117,9 @@ class AssistantChatController extends GetxController {
 
     msgController.clear();
 
-    final auth = Get.isRegistered<AuthController>() ? Get.find<AuthController>() : null;
+    final auth = Get.isRegistered<AuthController>()
+        ? Get.find<AuthController>()
+        : null;
     final userName = (auth?.user?.name ?? 'Astrologer').toString();
     final userId = auth?.user?.id;
 
@@ -184,14 +190,11 @@ class AssistantChatController extends GetxController {
           'You have used 5 free assistant messages.\n\nUser can purchase chat time from the User app to continue.',
         ),
         actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: const Text('Close'),
-          ),
+          TextButton(onPressed: () => Get.back(), child: const Text('Close')),
         ],
       ),
       barrierDismissible: true,
-      );
+    );
   }
 
   String _makeReply(String prompt) {
@@ -213,4 +216,3 @@ class AssistantChatController extends GetxController {
     return 'I can help you draft a professional reply. Share the user’s question and any details you want to include.';
   }
 }
-

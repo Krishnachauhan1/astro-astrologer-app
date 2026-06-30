@@ -1,9 +1,9 @@
 import 'dart:async';
-import 'package:astrosarthi_konnect_astrologer_app/authentication/auth_controller.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../utils/astrologer_identity.dart';
 import 'chat_session_filter.dart';
 
 class ChatController extends GetxController {
@@ -48,7 +48,9 @@ class ChatController extends GetxController {
   }
 
   void _listenSessionTimer() {
-    _firestore.collection('chat_sessions').doc(chatId).snapshots().listen((doc) {
+    _firestore.collection('chat_sessions').doc(chatId).snapshots().listen((
+      doc,
+    ) {
       if (!doc.exists) return;
       final data = doc.data() ?? {};
       DateTime? nextExpiry;
@@ -62,9 +64,7 @@ class ChatController extends GetxController {
 
       if (data['status'] == 'paused') {
         final remSec = data['remainingSeconds'];
-        final secs = remSec is int
-            ? remSec
-            : int.tryParse('$remSec') ?? 0;
+        final secs = remSec is int ? remSec : int.tryParse('$remSec') ?? 0;
         if (secs > 0) {
           nextExpiry = DateTime.now().add(Duration(seconds: secs));
         }
@@ -89,14 +89,15 @@ class ChatController extends GetxController {
     });
   }
 
-  int? _loggedInAstrologerId() {
-    if (!Get.isRegistered<AuthController>()) return null;
-    return ChatSessionFilter.parseId(Get.find<AuthController>().user?.id);
-  }
+  int? _loggedInAstrologerId() =>
+      AstrologerIdentity.userId ?? AstrologerIdentity.recordId;
 
   Future<void> _loadSessionMeta() async {
     try {
-      final doc = await _firestore.collection('chat_sessions').doc(chatId).get();
+      final doc = await _firestore
+          .collection('chat_sessions')
+          .doc(chatId)
+          .get();
       if (!doc.exists) return;
       final data = doc.data() ?? {};
 
@@ -106,8 +107,9 @@ class ChatController extends GetxController {
       }
 
       customerUserId = ChatSessionFilter.parseId(data['userId']);
-      final sessionAstroId =
-          ChatSessionFilter.parseId(data['astrologerId'] ?? data['astrologer_id']);
+      final sessionAstroId = ChatSessionFilter.parseId(
+        data['astrologerId'] ?? data['astrologer_id'],
+      );
       if (sessionAstroId != null) {
         astrologerId = sessionAstroId;
       }

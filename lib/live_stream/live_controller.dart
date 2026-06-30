@@ -14,13 +14,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../servicess/api_service.dart';
 import '../chat/chat_controller.dart';
+import 'live_chat_service.dart';
 
 class LiveController extends GetxController {
   static const _prefsKey = 'live_draft_session_v1';
   static const _pendingEndKey = 'live_pending_end_v1';
 
   RtcEngine? engine;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   StreamSubscription<QuerySnapshot<Map<String, dynamic>>>? _liveChatSub;
   String agoraAppId = '';
   String? agoraChannel;
@@ -153,10 +153,9 @@ class LiveController extends GetxController {
     } catch (_) {}
   }
 
-  CollectionReference<Map<String, dynamic>>? get _liveMessagesRef {
-    final id = currentLiveId;
-    if (id == null) return null;
-    return _firestore.collection('live_chats').doc(id.toString()).collection('messages');
+  void ensureLiveChatListening() {
+    if (currentLiveId == null) return;
+    _startLiveChat();
   }
 
   void _stopLiveChat() {
@@ -164,26 +163,35 @@ class LiveController extends GetxController {
     _liveChatSub = null;
   }
 
+  void _applyCommentSnapshot(
+    List<QueryDocumentSnapshot<Map<String, dynamic>>> docs,
+  ) {
+    comments
+      ..clear()
+      ..addAll(LiveChatService.mapAndSortCommentDocs(docs));
+    update();
+  }
+
   void _startLiveChat() {
     _stopLiveChat();
-    final ref = _liveMessagesRef;
-    if (ref == null) return;
-    _liveChatSub = ref.orderBy('createdAt', descending: false).snapshots().listen(
-      (snap) {
-        comments
-          ..clear()
-          ..addAll(
-            snap.docs.map((d) {
-              final m = d.data();
-              final name = (m['senderName'] ?? m['sender'] ?? 'User').toString();
-              final text = (m['text'] ?? '').toString();
-              return {'user': name, 'msg': text};
-            }),
-      );
-        update();
+    final id = currentLiveId;
+    if (id == null) return;
+
+    _liveChatSub = LiveChatService.watchComments(id).listen(
+      (snap) => _applyCommentSnapshot(snap.docs),
+      onError: (e) {
+        debugPrint('Live chat listener error: $e');
+        _listenCommentsFallback(id);
       },
-      onError: (_) {},
-      );
+    );
+  }
+
+  void _listenCommentsFallback(int streamId) {
+    _liveChatSub?.cancel();
+    _liveChatSub = LiveChatService.watchCommentsFallback(streamId).listen(
+      (snap) => _applyCommentSnapshot(snap.docs),
+      onError: (e) => debugPrint('Live chat fallback error: $e'),
+    );
   }
 
   Future<void> _persistDraft() async {
@@ -717,18 +725,21 @@ class LiveController extends GetxController {
 
     commentCtrl.clear();
 
-    final ref = _liveMessagesRef;
-    if (ref == null) return;
+    final id = currentLiveId;
+    if (id == null) return;
 
-    await ref.add({
-      'text': text,
-      'sender': 'astrologer',
-      'senderName': username,
-      'senderId': Get.isRegistered<AuthController>()
-          ? Get.find<AuthController>().user?.id
-          : null,
-      'createdAt': FieldValue.serverTimestamp(),
-    });
+    final auth = Get.isRegistered<AuthController>()
+        ? Get.find<AuthController>()
+        : null;
+
+    await LiveChatService.sendHostComment(
+      streamId: id,
+      text: text,
+      userName: username,
+      userId: auth?.user?.id.toString(),
+      astrologerId: auth?.user?.id,
+      astrologerName: auth?.user?.name,
+    );
   }
 
   void setHostScreenActive(bool active) {

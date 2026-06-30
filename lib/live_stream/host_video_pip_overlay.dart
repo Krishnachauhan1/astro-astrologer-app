@@ -1,6 +1,6 @@
 import 'package:agora_rtc_engine/agora_rtc_engine.dart';
-import 'package:astrosarthi_konnect_astrologer_app/app_theme.dart';
-import 'package:astrosarthi_konnect_astrologer_app/live_stream/live_controller.dart';
+import 'package:astrosarthi_vendor/app_theme.dart';
+import 'package:astrosarthi_vendor/live_stream/live_controller.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -108,7 +108,8 @@ class _HostVideoPipOverlayState extends State<HostVideoPipOverlay> {
 
         final remoteUid = lc.callRemoteUid ?? lc.expectedCallRemoteUid;
         final callConn = lc.callRtcConnection;
-        final showRemote = lc.engine != null &&
+        final showRemote =
+            lc.engine != null &&
             lc.callJoined &&
             callConn != null &&
             remoteUid != null &&
@@ -129,7 +130,8 @@ class _HostVideoPipOverlayState extends State<HostVideoPipOverlay> {
                   ),
                   connection: callConn,
                   useAndroidSurfaceView:
-                      !kIsWeb && defaultTargetPlatform == TargetPlatform.android,
+                      !kIsWeb &&
+                      defaultTargetPlatform == TargetPlatform.android,
                   useFlutterTexture:
                       !kIsWeb && defaultTargetPlatform == TargetPlatform.iOS,
                 ),
@@ -150,10 +152,7 @@ class _HostVideoPipOverlayState extends State<HostVideoPipOverlay> {
               bottom: 0,
               child: Container(
                 color: Colors.black54,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 6,
-                  vertical: 4,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
